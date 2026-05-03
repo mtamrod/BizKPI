@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "BizKPI",
+    "slug": "bizkpi",
+    "scheme": "bizkpi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "backgroundColor": "#06070B"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.bizkpi.app"
+    },
+    "android": {
+      "package": "com.bizkpi.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#06070B"
+      },
+      "softwareKeyboardLayoutMode": "pan"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
