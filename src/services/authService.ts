@@ -1,10 +1,6 @@
-import { MOCK_CREDENTIALS, MOCK_TOKEN, MOCK_USER } from '@/mocks/authMocks';
-import { storage, STORAGE_KEYS } from '@/utils/storage';
+import { supabase } from '@/lib/supabaseClient';
+import { userService } from '@/services/userService';
 import type { LoginInput, UserSession } from '@/types';
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export interface LoginResult {
   success: boolean;
@@ -12,42 +8,78 @@ export interface LoginResult {
   error?: string;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Builds a UserSession from a Supabase session + optional backend profile. */
+async function buildSession(
+  accessToken: string,
+  userId: string,
+  email: string,
+  rememberMe = true,
+): Promise<UserSession> {
+  const profile = await userService.getProfile().catch(() => null);
+  return {
+    token: accessToken,
+    user: {
+      id: userId,
+      name: profile?.business_name ?? email.split('@')[0] ?? 'Usuario',
+      email,
+      role: 'admin',
+      avatarColor: '#7C3AED',
+    },
+    activeCompanyId: userId, // no company concept in backend — user IS the entity
+    rememberMe,
+    authenticatedAt: new Date().toISOString(),
+  };
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
 export const authService = {
   async login(input: LoginInput): Promise<LoginResult> {
-    await delay(800);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+    });
 
-    const emailOk = input.email.trim().toLowerCase() === MOCK_CREDENTIALS.email;
-    const passOk  = input.password === MOCK_CREDENTIALS.password;
-
-    if (!emailOk || !passOk) {
+    if (error || !data.session) {
       return {
         success: false,
-        error: `Credenciales inválidas.\nUsa: ${MOCK_CREDENTIALS.email} / ${MOCK_CREDENTIALS.password}`,
+        error: error?.message ?? 'Credenciales incorrectas.',
       };
     }
 
-    const session: UserSession = {
-      token: MOCK_TOKEN,
-      user: MOCK_USER,
-      activeCompanyId: 'co_001',
-      rememberMe: input.rememberMe,
-      authenticatedAt: new Date().toISOString(),
-    };
+    const session = await buildSession(
+      data.session.access_token,
+      data.user.id,
+      data.user.email ?? input.email,
+      input.rememberMe,
+    );
 
     return { success: true, session };
   },
 
+  /**
+   * Restores a session on app boot.
+   * Uses the Supabase SDK cache (handles token refresh automatically).
+   */
   async loadSession(): Promise<UserSession | null> {
-    return storage.get<UserSession>(STORAGE_KEYS.AUTH_SESSION);
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return null;
+
+    const { access_token, user } = data.session;
+    return buildSession(access_token, user.id, user.email ?? '', true);
   },
 
-  async persistSession(session: UserSession): Promise<void> {
-    if (session.rememberMe) {
-      await storage.set(STORAGE_KEYS.AUTH_SESSION, session);
-    }
+  /**
+   * Supabase SDK persists the session in AsyncStorage automatically.
+   * This is a no-op kept for API compatibility with AuthContext.
+   */
+  async persistSession(_session: UserSession): Promise<void> {
+    // Intentionally empty — Supabase SDK handles persistence.
   },
 
   async clearSession(): Promise<void> {
-    await storage.remove(STORAGE_KEYS.AUTH_SESSION);
+    await supabase.auth.signOut();
   },
 };

@@ -44,14 +44,15 @@ export default function DashboardScreen() {
     );
   }
 
-  const name = session?.user.name.split(' ')[0] ?? 'usuario';
+  const businessName = session?.user.name ?? 'Mi empresa';
+  const firstName = businessName.split(' ')[0] ?? 'usuario';
 
   return (
     <ScreenWrapper>
       {/* Header */}
       <Header
-        title={`${greeting()}, ${name}`}
-        subtitle={`TechCorp S.L. · Panel principal`}
+        title={`${greeting()}, ${firstName}`}
+        subtitle="Panel principal"
       />
 
       {/* Empresa + estado */}
@@ -62,10 +63,10 @@ export default function DashboardScreen() {
               Empresa activa
             </Text>
             <Text style={[styles.statusName, { color: colors.textPrimary }]}>
-              TechCorp S.L.
+              {businessName}
             </Text>
             <Text style={[styles.statusSector, { color: colors.textSecondary }]}>
-              B2B SaaS · Madrid
+              {session?.user.email ?? ''}
             </Text>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: `${colors.accent}22` }]}>

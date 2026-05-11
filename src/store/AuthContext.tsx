@@ -7,6 +7,8 @@ import React, {
   useReducer,
 } from 'react';
 import { authService } from '@/services/authService';
+import { supabase } from '@/lib/supabaseClient';
+import { userService } from '@/services/userService';
 import type { AuthStatus, LoginInput, UserSession } from '@/types';
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -73,6 +75,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (active) dispatch({ type: 'RESTORE', session });
     });
     return () => { active = false; };
+  }, []);
+
+  // Keep session token in sync when Supabase auto-refreshes it
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, supabaseSession) => {
+        if (event === 'TOKEN_REFRESHED' && supabaseSession) {
+          const profile = await userService.getProfile().catch(() => null);
+          const updatedSession: UserSession = {
+            token: supabaseSession.access_token,
+            user: {
+              id: supabaseSession.user.id,
+              name: profile?.business_name ?? supabaseSession.user.email?.split('@')[0] ?? 'Usuario',
+              email: supabaseSession.user.email ?? '',
+              role: 'admin',
+              avatarColor: '#7C3AED',
+            },
+            activeCompanyId: supabaseSession.user.id,
+            rememberMe: true,
+            authenticatedAt: new Date().toISOString(),
+          };
+          dispatch({ type: 'LOGIN_SUCCESS', session: updatedSession });
+        }
+
+        if (event === 'SIGNED_OUT') {
+          dispatch({ type: 'LOGOUT' });
+        }
+      },
+    );
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = useCallback(async (input: LoginInput) => {

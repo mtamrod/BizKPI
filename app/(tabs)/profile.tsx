@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,7 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/theme/ThemeContext';
-import { MOCK_COMPANIES } from '@/mocks/authMocks';
+import { userService, type UserProfile } from '@/services/userService';
 import { fmt } from '@/utils/formatters';
 import type { ThemeMode } from '@/types';
 
@@ -31,12 +30,36 @@ export default function ProfileScreen() {
   const { session, logout } = useAuth();
   const { colors, mode, setTheme } = useTheme();
 
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [newCompanyName, setNewCompanyName]     = useState('');
-  const [activeCompanyId, setActiveCompanyId]   = useState('co_001');
+  const [profile, setProfile]           = useState<UserProfile | null>(null);
+  const [editingName, setEditingName]   = useState(false);
+  const [newName, setNewName]           = useState('');
+  const [saving, setSaving]             = useState(false);
+
+  const loadProfile = useCallback(async () => {
+    const p = await userService.getProfile();
+    setProfile(p);
+    setNewName(p?.business_name ?? '');
+  }, []);
+
+  useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  const handleSaveName = useCallback(async () => {
+    if (!newName.trim()) return;
+    setSaving(true);
+    try {
+      const updated = await userService.updateProfile({ business_name: newName.trim() });
+      setProfile(updated);
+      setEditingName(false);
+    } catch {
+      Alert.alert('Error', 'No se pudo actualizar el nombre. Inténtalo de nuevo.');
+    } finally {
+      setSaving(false);
+    }
+  }, [newName]);
 
   if (!session) return null;
   const { user } = session;
+  const displayName = profile?.business_name ?? user.name;
 
   return (
     <ScreenWrapper keyboardAware>
@@ -60,17 +83,53 @@ export default function ProfileScreen() {
           </LinearGradient>
 
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>
-              {user.name}
-            </Text>
-            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
-              {user.email}
-            </Text>
-            <View style={[styles.roleBadge, { backgroundColor: `${colors.primary}22` }]}>
-              <Text style={[styles.roleText, { color: colors.primaryLight }]}>
-                {user.role === 'admin' ? 'Administrador' : 'Visor'}
-              </Text>
-            </View>
+            {editingName ? (
+              <View style={{ gap: 8 }}>
+                <Input
+                  label="Nombre de empresa"
+                  value={newName}
+                  onChangeText={setNewName}
+                  placeholder="Nombre de tu empresa"
+                />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Button
+                    label="Guardar"
+                    onPress={handleSaveName}
+                    loading={saving}
+                    fullWidth={false}
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    label="Cancelar"
+                    variant="secondary"
+                    onPress={() => { setEditingName(false); setNewName(profile?.business_name ?? ''); }}
+                    fullWidth={false}
+                    style={{ flex: 1 }}
+                  />
+                </View>
+              </View>
+            ) : (
+              <>
+                <TouchableOpacity onPress={() => setEditingName(true)} activeOpacity={0.7}>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                    {displayName} <Ionicons name="pencil-outline" size={14} color={colors.textSecondary} />
+                  </Text>
+                </TouchableOpacity>
+                <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+                  {user.email}
+                </Text>
+                {profile?.business_sector ? (
+                  <Text style={[styles.userEmail, { color: colors.textSecondary }]}>
+                    {profile.business_sector}
+                  </Text>
+                ) : null}
+                <View style={[styles.roleBadge, { backgroundColor: `${colors.primary}22` }]}>
+                  <Text style={[styles.roleText, { color: colors.primaryLight }]}>
+                    Administrador
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </GlassCard>
@@ -118,77 +177,21 @@ export default function ProfileScreen() {
         </View>
       </GlassCard>
 
-      {/* ── Empresas ──────────────────────────────────────────────────────── */}
-      <SectionTitle label="Empresas" />
-      <View style={styles.companiesList}>
-        {MOCK_COMPANIES.map((company) => {
-          const active = company.id === activeCompanyId;
-          return (
-            <TouchableOpacity
-              key={company.id}
-              onPress={() => setActiveCompanyId(company.id)}
-              activeOpacity={0.75}
-            >
-              <GlassCard
-                style={[
-                  styles.companyCard,
-                  active ? { borderColor: company.accentColor, borderWidth: 1.5 } : undefined,
-                ]}
-                glowColor={active ? company.accentColor : undefined}
-              >
-                <View style={styles.companyRow}>
-                  <View
-                    style={[styles.companyIcon, { backgroundColor: `${company.accentColor}22` }]}
-                  >
-                    <Ionicons name="business-outline" size={16} color={company.accentColor} />
-                  </View>
-                  <View style={styles.companyInfo}>
-                    <Text style={[styles.companyName, { color: colors.textPrimary }]}>
-                      {company.name}
-                    </Text>
-                    <Text style={[styles.companySector, { color: colors.textSecondary }]}>
-                      {company.sector} · {company.location}
-                    </Text>
-                  </View>
-                  {active ? (
-                    <View
-                      style={[styles.activeBadge, { backgroundColor: `${company.accentColor}22` }]}
-                    >
-                      <Text style={[styles.activeText, { color: company.accentColor }]}>
-                        Activa
-                      </Text>
-                    </View>
-                  ) : (
-                    <Ionicons
-                      name="chevron-forward"
-                      size={16}
-                      color={colors.textSecondary}
-                    />
-                  )}
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
-          );
-        })}
-        <Button
-          label="+ Nueva empresa"
-          variant="secondary"
-          onPress={() => setShowCompanyModal(true)}
-        />
-      </View>
-
       {/* ── Seguridad ─────────────────────────────────────────────────────── */}
       <SectionTitle label="Seguridad" />
       <GlassCard style={styles.actionCard}>
         <TouchableOpacity
           style={styles.actionRow}
           activeOpacity={0.7}
-          onPress={() =>
-            Alert.alert(
-              'Cambiar contraseña',
-              'Disponible en cuanto exista conexión backend.',
-            )
-          }
+          onPress={async () => {
+            if (!user.email) return;
+            const { error } = await (await import('@/lib/supabaseClient')).supabase.auth.resetPasswordForEmail(user.email);
+            if (error) {
+              Alert.alert('Error', error.message);
+            } else {
+              Alert.alert('Correo enviado', `Revisa ${user.email} para restablecer tu contraseña.`);
+            }
+          }}
         >
           <View style={[styles.actionIcon, { backgroundColor: `${colors.primary}20` }]}>
             <Ionicons name="key-outline" size={18} color={colors.primaryLight} />
@@ -202,59 +205,6 @@ export default function ProfileScreen() {
 
       <Button label="Cerrar sesión" variant="danger" onPress={logout} />
 
-      {/* ── Modal nueva empresa ───────────────────────────────────────────── */}
-      <Modal
-        visible={showCompanyModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowCompanyModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <GlassCard style={styles.modalCard}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              Nueva empresa
-            </Text>
-            <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
-              Añade una compañía a tu espacio de trabajo.
-            </Text>
-            <Input
-              label="Nombre de la empresa"
-              value={newCompanyName}
-              onChangeText={setNewCompanyName}
-              placeholder="Ej. Atlas Finance S.L."
-            />
-            <View style={styles.modalActions}>
-              <Button
-                label="Cancelar"
-                variant="secondary"
-                onPress={() => {
-                  setShowCompanyModal(false);
-                  setNewCompanyName('');
-                }}
-                fullWidth={false}
-                style={{ flex: 1 }}
-              />
-              <Button
-                label="Crear"
-                onPress={() => {
-                  if (!newCompanyName.trim()) {
-                    Alert.alert('Campo requerido', 'Introduce el nombre de la empresa.');
-                    return;
-                  }
-                  Alert.alert(
-                    'Empresa creada',
-                    `"${newCompanyName}" estará disponible al conectar el backend.`,
-                  );
-                  setNewCompanyName('');
-                  setShowCompanyModal(false);
-                }}
-                fullWidth={false}
-                style={{ flex: 1 }}
-              />
-            </View>
-          </GlassCard>
-        </View>
-      </Modal>
     </ScreenWrapper>
   );
 }
@@ -303,26 +253,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   themeBtnText: { fontSize: 14, fontWeight: '600' },
-  // ── Companies ──
-  companiesList: { gap: 10 },
-  companyCard: { padding: 16 },
-  companyRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  companyIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  companyInfo: { flex: 1, gap: 2 },
-  companyName: { fontSize: 15, fontWeight: '600' },
-  companySector: { fontSize: 12 },
-  activeBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  activeText: { fontSize: 11, fontWeight: '700' },
   // ── Security ──
   actionCard: { padding: 0 },
   actionRow: {
@@ -339,16 +269,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionLabel: { flex: 1, fontSize: 15, fontWeight: '500' },
-  // ── Modal ──
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    padding: 16,
-    paddingBottom: 32,
-  },
-  modalCard: { padding: 24, gap: 14 },
-  modalTitle: { fontSize: 20, fontWeight: '700' },
-  modalDesc: { fontSize: 14, lineHeight: 20 },
-  modalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
 });
