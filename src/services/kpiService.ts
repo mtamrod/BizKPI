@@ -43,8 +43,10 @@ interface BusinessDataRead {
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
+/** Convierte cualquier valor numérico/null/undefined a number seguro. */
 function n(v: number | null | undefined): number {
-  return v ?? 0;
+  const num = Number(v);
+  return isNaN(num) ? 0 : num;
 }
 
 function formatCurrency(value: number | null | undefined): string {
