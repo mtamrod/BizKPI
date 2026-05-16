@@ -13,15 +13,15 @@ import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PeriodPicker } from '@/components/ui/PeriodPicker';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useDataEntries } from '@/hooks/useDataEntries';
 import { fmt } from '@/utils/formatters';
+import { getDefaultPeriod, formatPeriodRange } from '@/utils/periodHelpers';
 import type { PeriodType } from '@/types';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const todayISO = () => new Date().toISOString().slice(0, 10);
 
 function parseNum(s: string): number {
   return parseFloat(s.replace(',', '.').replace(/\s/g, ''));
@@ -86,9 +86,11 @@ export default function DataScreen() {
   const { entries, addEntry, status } = useDataEntries(companyId);
 
   // ── Required fields ──
-  const [period, setPeriod]         = useState<PeriodType>('week');
-  const [periodDate, setPeriodDate] = useState(todayISO());
-  const [revenue, setRevenue]       = useState('');
+  const [period, setPeriod] = useState<PeriodType>('week');
+  const initPeriod = getDefaultPeriod('week');
+  const [periodStart, setPeriodStart] = useState(initPeriod.start);
+  const [periodEnd,   setPeriodEnd]   = useState(initPeriod.end);
+  const [revenue, setRevenue]         = useState('');
   const [expenses, setExpenses]     = useState('');
   const [sales, setSales]           = useState('');
   const [clients, setClients]       = useState('');
@@ -120,9 +122,6 @@ export default function DataScreen() {
   // ── Validation ──
   function validate(): boolean {
     const next: Record<string, string> = {};
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(periodDate)) {
-      next.periodDate = 'Formato: AAAA-MM-DD';
-    }
     const rev = parseNum(revenue);
     if (!revenue.trim() || isNaN(rev) || rev < 0) {
       next.revenue = 'Introduce los ingresos totales';
@@ -149,7 +148,8 @@ export default function DataScreen() {
     try {
       await addEntry({
         period,
-        periodDate,
+        periodDate:    periodStart,
+        periodEndDate: periodEnd,
         totalRevenue:  parseNum(revenue),
         totalExpenses: parseNum(expenses),
         totalSales:    parseInt(sales, 10),
@@ -159,8 +159,10 @@ export default function DataScreen() {
         worstDay:      worstDay    || undefined,
         observations:  observations || undefined,
       });
-      // Reset form
-      setPeriodDate(todayISO());
+      // Reset form — vuelve a la semana actual
+      const fresh = getDefaultPeriod(period);
+      setPeriodStart(fresh.start);
+      setPeriodEnd(fresh.end);
       setRevenue('');
       setExpenses('');
       setSales('');
@@ -190,7 +192,7 @@ export default function DataScreen() {
             <View style={styles.statsTop}>
               <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                 <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                  {PERIOD_LABEL[lastEntry.period]} · {lastEntry.periodDate}
+                  {PERIOD_LABEL[lastEntry.period]} · {formatPeriodRange(lastEntry.period, lastEntry.periodDate, lastEntry.periodEndDate)}
                 </Text>
               </View>
               <Text style={[styles.statsHint, { color: colors.textSecondary }]}>
@@ -243,7 +245,12 @@ export default function DataScreen() {
               return (
                 <TouchableOpacity
                   key={opt.key}
-                  onPress={() => setPeriod(opt.key)}
+                  onPress={() => {
+                    setPeriod(opt.key);
+                    const { start, end } = getDefaultPeriod(opt.key);
+                    setPeriodStart(start);
+                    setPeriodEnd(end);
+                  }}
                   style={[
                     styles.periodChip,
                     {
@@ -272,15 +279,18 @@ export default function DataScreen() {
           </View>
         </View>
 
-        {/* Date */}
-        <Input
-          label="Fecha del período *"
-          value={periodDate}
-          onChangeText={setPeriodDate}
-          placeholder="AAAA-MM-DD"
-          keyboardType="numbers-and-punctuation"
-          error={errors.periodDate}
-        />
+        {/* Date picker */}
+        <View style={styles.fieldBlock}>
+          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+            Fecha del período *
+          </Text>
+          <PeriodPicker
+            type={period}
+            startDate={periodStart}
+            endDate={periodEnd}
+            onChange={(s, e) => { setPeriodStart(s); setPeriodEnd(e); }}
+          />
+        </View>
 
         {/* Revenue + Expenses */}
         <View style={styles.twoCol}>
@@ -408,7 +418,7 @@ export default function DataScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.entryDate, { color: colors.textSecondary }]}>
-                    {fmt.shortDate(entry.periodDate)}
+                    {formatPeriodRange(entry.period, entry.periodDate, entry.periodEndDate)}
                   </Text>
                   <View style={styles.entryDateSpacer} />
                   {entry.source === 'import' && (

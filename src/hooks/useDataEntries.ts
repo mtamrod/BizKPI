@@ -59,6 +59,7 @@ export function useDataEntries(companyId: string) {
         companyId,
         period:        input.period,
         periodDate:    input.periodDate,
+        periodEndDate: input.periodEndDate,
         totalRevenue:  input.totalRevenue,
         totalExpenses: input.totalExpenses,
         totalSales:    input.totalSales,

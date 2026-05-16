@@ -23,18 +23,19 @@ export const fmt = {
   },
 
   date(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    if (!iso) return '—';
+    const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
+    const dd = d.getDate().toString().padStart(2, '0');
+    const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
   },
 
   shortDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-    });
+    if (!iso) return '—';
+    const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
+    const dd = d.getDate().toString().padStart(2, '0');
+    const mm = (d.getMonth() + 1).toString().padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
   },
 
   relativeDate(iso: string): string {

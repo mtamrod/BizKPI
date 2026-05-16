@@ -62,15 +62,15 @@ export const periodService = {
 
   /**
    * Finds an existing period that matches the given date range, or creates a new one.
-   * This prevents duplicate periods for the same date range.
+   * start_date and end_date must be complete calendar periods
+   * (single day, Mon–Sun week, or full month).
    */
   async findOrCreate(
     period: PeriodType,
-    referenceDate: string,
+    start_date: string,
+    end_date: string,
   ): Promise<PeriodRead> {
-    const { start_date, end_date } = computePeriodDates(period, referenceDate);
-
-    // Look for an existing period with the same start and end
+    // Look for an existing period with the same range
     const periods = await periodService.list();
     const existing = periods.find(
       (p) => p.period_type === period && p.start_date === start_date && p.end_date === end_date,

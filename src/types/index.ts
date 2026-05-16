@@ -87,6 +87,8 @@ export interface DataEntry {
   period: PeriodType;
   /** Fecha de inicio del período (ISO YYYY-MM-DD) */
   periodDate: string;
+  /** Fecha de fin del período (ISO YYYY-MM-DD) */
+  periodEndDate: string;
   /** Ingresos totales del período */
   totalRevenue: number;
   /** Gastos totales del período */
@@ -114,7 +116,8 @@ export interface DataEntry {
 export interface CreateEntryInput {
   companyId: string;
   period: PeriodType;
-  periodDate: string;
+  periodDate: string;    // start_date
+  periodEndDate: string; // end_date
   totalRevenue: number;
   totalExpenses: number;
   totalSales: number;

@@ -42,11 +42,13 @@ interface BusinessDataRead {
 // ─── Conversion helpers ───────────────────────────────────────────────────────
 
 function toDataEntry(bd: BusinessDataRead, period: PeriodRead | undefined): DataEntry {
+  const startISO = period?.start_date ?? bd.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
   return {
     id: bd.id,
     companyId: bd.user_id,
     period: (period?.period_type ?? 'day') as PeriodType,
-    periodDate: period?.start_date ?? bd.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+    periodDate: startISO,
+    periodEndDate: period?.end_date ?? startISO,
     totalRevenue: Number(bd.total_revenue),
     totalExpenses: Number(bd.total_expenses),
     totalSales: bd.num_sales,
@@ -73,7 +75,7 @@ export const dataEntryService = {
 
   async addEntry(input: CreateEntryInput): Promise<DataEntry> {
     // 1. Find or create the period for this date range
-    const period = await periodService.findOrCreate(input.period, input.periodDate);
+    const period = await periodService.findOrCreate(input.period, input.periodDate, input.periodEndDate);
 
     // 2. Build the payload for business_data
     const payload: BusinessDataCreate = {
