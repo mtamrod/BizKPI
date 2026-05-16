@@ -43,25 +43,32 @@ interface BusinessDataRead {
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    const m = value / 1_000_000;
+function n(v: number | null | undefined): number {
+  return v ?? 0;
+}
+
+function formatCurrency(value: number | null | undefined): string {
+  const v = n(value);
+  if (v >= 1_000_000) {
+    const m = v / 1_000_000;
     return `€${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
   }
-  if (value >= 1_000) {
-    const k = value / 1_000;
+  if (v >= 1_000) {
+    const k = v / 1_000;
     return `€${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
   }
-  return `€${Math.round(value).toLocaleString('es-ES')}`;
+  return `€${Math.round(v).toLocaleString('es-ES')}`;
 }
 
-function formatPct(value: number): string {
-  return `${value.toFixed(1)}%`;
+function formatPct(value: number | null | undefined): string {
+  return `${n(value).toFixed(1)}%`;
 }
 
-function pctDelta(current: number, previous: number): number {
-  if (previous === 0) return 0;
-  return ((current - previous) / previous) * 100;
+function pctDelta(current: number | null | undefined, previous: number | null | undefined): number {
+  const c = n(current);
+  const p = n(previous);
+  if (p === 0) return 0;
+  return ((c - p) / p) * 100;
 }
 
 /** Formats a period's start_date as a short label (e.g. "Ene", "Sem 1", "01") */
@@ -82,14 +89,14 @@ function periodLabel(period: PeriodRead | undefined, fallbackIndex: number): str
 function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
   const revDelta = prev ? pctDelta(latest.revenue, prev.revenue) : 0;
   const custDelta = prev ? pctDelta(latest.num_customers, prev.num_customers) : 0;
-  const marginDelta = prev ? latest.profit_margin - prev.profit_margin : 0;
+  const marginDelta = prev ? n(latest.profit_margin) - n(prev.profit_margin) : 0;
   const salesDelta = prev ? pctDelta(latest.num_sales, prev.num_sales) : 0;
 
   return [
     {
       id: 'revenue',
       label: 'Ingresos',
-      value: latest.revenue,
+      value: n(latest.revenue),
       formattedValue: formatCurrency(latest.revenue),
       delta: Math.abs(revDelta),
       deltaLabel: 'vs. período anterior',
@@ -99,8 +106,8 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
     {
       id: 'customers',
       label: 'Clientes',
-      value: latest.num_customers,
-      formattedValue: latest.num_customers.toLocaleString('es-ES'),
+      value: n(latest.num_customers),
+      formattedValue: n(latest.num_customers).toLocaleString('es-ES'),
       delta: Math.abs(custDelta),
       deltaLabel: 'clientes atendidos',
       trend: custDelta >= 0 ? 'up' : 'down',
@@ -109,7 +116,7 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
     {
       id: 'margin',
       label: 'Margen neto',
-      value: latest.profit_margin,
+      value: n(latest.profit_margin),
       formattedValue: formatPct(latest.profit_margin),
       delta: Math.abs(marginDelta),
       deltaLabel: 'puntos vs. anterior',
@@ -119,8 +126,8 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
     {
       id: 'sales',
       label: 'Ventas',
-      value: latest.num_sales,
-      formattedValue: latest.num_sales.toLocaleString('es-ES'),
+      value: n(latest.num_sales),
+      formattedValue: n(latest.num_sales).toLocaleString('es-ES'),
       delta: Math.abs(salesDelta),
       deltaLabel: 'operaciones',
       trend: salesDelta >= 0 ? 'up' : 'down',
@@ -130,8 +137,8 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
 }
 
 function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | undefined): CategorySegment[] {
-  const revenue = latest.revenue || 1;
-  const netProfit = Math.max(0, latest.net_profit);
+  const revenue = n(latest.revenue) || 1;
+  const netProfit = Math.max(0, n(latest.net_profit));
   const cogs = latestBData?.cost_of_goods_sold ?? null;
   const marketing = latestBData?.marketing_expenses ?? null;
 
@@ -156,22 +163,22 @@ function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | un
 }
 
 function buildHeadline(latest: KpiRead): { headline: string; subtitle: string } {
-  const margin = latest.profit_margin;
+  const margin = n(latest.profit_margin);
   if (margin >= 20) {
     return {
       headline: 'Margen sólido y rendimiento sobre objetivo.',
-      subtitle: `Beneficio neto del ${latest.profit_margin.toFixed(1)} %. Ticket medio ${formatCurrency(latest.avg_ticket)}.`,
+      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Ticket medio ${formatCurrency(latest.avg_ticket)}.`,
     };
   }
   if (margin >= 0) {
     return {
       headline: 'Operación estable con margen ajustado.',
-      subtitle: `Beneficio neto del ${latest.profit_margin.toFixed(1)} %. Revisa la estructura de costes.`,
+      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Revisa la estructura de costes.`,
     };
   }
   return {
     headline: 'Período con resultado negativo.',
-    subtitle: `Pérdida de ${formatCurrency(Math.abs(latest.net_profit))}. Analiza el detalle de gastos.`,
+    subtitle: `Pérdida de ${formatCurrency(Math.abs(n(latest.net_profit)))}. Analiza el detalle de gastos.`,
   };
 }
 
