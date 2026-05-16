@@ -30,14 +30,11 @@ export function useKPIs(companyId: string) {
   });
 
   const load = useCallback(async () => {
-    console.log('[KPI] load START, companyId:', companyId);
     dispatch({ type: 'FETCH_START' });
     try {
       const data = await kpiService.getDashboard(companyId);
-      console.log('[KPI] load SUCCESS');
       dispatch({ type: 'FETCH_SUCCESS', data });
-    } catch (e) {
-      console.error('[KPI] load ERROR:', e);
+    } catch {
       dispatch({ type: 'FETCH_ERROR', error: 'No se pudieron cargar los KPIs.' });
     }
   }, [companyId]);

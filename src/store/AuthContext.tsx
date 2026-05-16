@@ -72,9 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true;
     authService.loadSession().then((session) => {
-      console.log('[AUTH] RESTORE dispatched, session:', !!session);
       if (active) dispatch({ type: 'RESTORE', session });
-    }).catch((e) => console.error('[AUTH] loadSession ERROR:', e));
+    });
     return () => { active = false; };
   }, []);
 
