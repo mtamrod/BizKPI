@@ -26,17 +26,33 @@ export class ApiError extends Error {
 
 // ─── Core request ────────────────────────────────────────────────────────────
 
+const TIMEOUT_MS = 60_000;
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const auth = await getAuthHeader();
 
-  const response = await fetch(`${BASE_URL}${API_PREFIX}${path}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: auth,
-    },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${API_PREFIX}${path}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: auth,
+      },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new ApiError(408, 'El servidor tardó demasiado en responder. Inténtalo de nuevo.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;

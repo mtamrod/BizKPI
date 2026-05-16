@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -31,7 +31,27 @@ export default function DashboardScreen() {
   const { session } = useAuth();
   const { colors } = useTheme();
   const companyId = session?.activeCompanyId ?? 'co_001';
-  const { data, status } = useKPIs(companyId);
+  const { data, status, refresh } = useKPIs(companyId);
+
+  if (status === 'error' && !data) {
+    return (
+      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
+        <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+        <Text style={[styles.loadingText, { color: colors.textPrimary, fontWeight: '600' }]}>
+          No se pudo cargar el panel
+        </Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary, textAlign: 'center' }]}>
+          Comprueba tu conexión o espera unos segundos.
+        </Text>
+        <TouchableOpacity
+          onPress={refresh}
+          style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Reintentar</Text>
+        </TouchableOpacity>
+      </ScreenWrapper>
+    );
+  }
 
   if (status === 'loading' || !data) {
     return (
@@ -170,6 +190,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: { fontSize: 14 },
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
 
   // ── Status card ──
   statusCard: {

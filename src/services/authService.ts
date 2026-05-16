@@ -68,7 +68,21 @@ export const authService = {
     if (!data.session) return null;
 
     const { access_token, user } = data.session;
-    return buildSession(access_token, user.id, user.email ?? '', true);
+    // No llamamos a buildSession() aquí porque hace GET /users/me
+    // bloqueando hydrated=true hasta que el backend responda.
+    return {
+      token: access_token,
+      user: {
+        id: user.id,
+        name: user.email?.split('@')[0] ?? 'Usuario',
+        email: user.email ?? '',
+        role: 'admin' as const,
+        avatarColor: '#7C3AED',
+      },
+      activeCompanyId: user.id,
+      rememberMe: true,
+      authenticatedAt: new Date().toISOString(),
+    };
   },
 
   /**
