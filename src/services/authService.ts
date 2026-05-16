@@ -64,10 +64,13 @@ export const authService = {
    * Uses the Supabase SDK cache (handles token refresh automatically).
    */
   async loadSession(): Promise<UserSession | null> {
+    console.log('[AUTH] loadSession START');
     const { data } = await supabase.auth.getSession();
-    if (!data.session) return null;
+    console.log('[AUTH] getSession done, session:', !!data.session);
+    if (!data.session) { console.log('[AUTH] no session → null'); return null; }
 
     const { access_token, user } = data.session;
+    console.log('[AUTH] building session for', user.email);
     // No llamamos a buildSession() aquí porque hace GET /users/me
     // bloqueando hydrated=true hasta que el backend responda.
     return {
@@ -83,6 +86,7 @@ export const authService = {
       rememberMe: true,
       authenticatedAt: new Date().toISOString(),
     };
+    console.log('[AUTH] loadSession DONE ✓');
   },
 
   /**
