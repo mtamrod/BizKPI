@@ -2,6 +2,7 @@ import React from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   View,
   type ViewStyle,
@@ -15,6 +16,10 @@ interface ScreenWrapperProps {
   keyboardAware?: boolean;
   contentStyle?: ViewStyle;
   paddingTop?: number;
+  /** Pull-to-refresh: pass the reload function */
+  onRefresh?: () => void;
+  /** Whether the refresh indicator is spinning */
+  refreshing?: boolean;
 }
 
 export function ScreenWrapper({
@@ -23,6 +28,8 @@ export function ScreenWrapper({
   keyboardAware = false,
   contentStyle,
   paddingTop = 12,
+  onRefresh,
+  refreshing = false,
 }: ScreenWrapperProps) {
   const insets = useSafeAreaInsets();
 
@@ -30,6 +37,11 @@ export function ScreenWrapper({
     <ScrollView
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        ) : undefined
+      }
       contentContainerStyle={[
         {
           flexGrow: 1,

@@ -81,6 +81,8 @@ export type EntrySource = 'manual' | 'import';
 export interface DataEntry {
   id: string;
   companyId: string;
+  /** Supabase period row id — needed to delete its AI recommendation on replace */
+  periodId: string;
 
   // ── Obligatorios ──────────────────────────────────────────────────────────
   /** Granularidad: día / semana / mes */

@@ -46,6 +46,7 @@ function toDataEntry(bd: BusinessDataRead, period: PeriodRead | undefined): Data
   return {
     id: bd.id,
     companyId: bd.user_id,
+    periodId: bd.period_id,
     period: (period?.period_type ?? 'day') as PeriodType,
     periodDate: startISO,
     periodEndDate: period?.end_date ?? startISO,
@@ -93,5 +94,9 @@ export const dataEntryService = {
     const created = await apiClient.post<BusinessDataRead>('/business-data/', payload);
 
     return toDataEntry(created, period);
+  },
+
+  async deleteEntry(id: string): Promise<void> {
+    await apiClient.delete(`/business-data/${id}`);
   },
 };

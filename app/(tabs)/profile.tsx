@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   Alert,
   StyleSheet,
@@ -27,13 +28,14 @@ function SectionTitle({ label }: { label: string }) {
 }
 
 export default function ProfileScreen() {
-  const { session, logout } = useAuth();
+  const { session, logout, updateUserName } = useAuth();
   const { colors, mode, setTheme } = useTheme();
 
   const [profile, setProfile]           = useState<UserProfile | null>(null);
   const [editingName, setEditingName]   = useState(false);
   const [newName, setNewName]           = useState('');
   const [saving, setSaving]             = useState(false);
+  const [refreshing, setRefreshing]     = useState(false);
 
   const loadProfile = useCallback(async () => {
     const p = await userService.getProfile();
@@ -41,7 +43,17 @@ export default function ProfileScreen() {
     setNewName(p?.business_name ?? '');
   }, []);
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadProfile();
+    setRefreshing(false);
+  }, [loadProfile]);
+
   useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  useFocusEffect(
+    useCallback(() => { loadProfile(); }, [loadProfile]),
+  );
 
   const handleSaveName = useCallback(async () => {
     if (!newName.trim()) return;
@@ -50,6 +62,7 @@ export default function ProfileScreen() {
       const updated = await userService.updateProfile({ business_name: newName.trim() });
       setProfile(updated);
       setEditingName(false);
+      updateUserName(updated.business_name);
     } catch {
       Alert.alert('Error', 'No se pudo actualizar el nombre. Inténtalo de nuevo.');
     } finally {
@@ -62,7 +75,7 @@ export default function ProfileScreen() {
   const displayName = profile?.business_name ?? user.name;
 
   return (
-    <ScreenWrapper keyboardAware>
+    <ScreenWrapper keyboardAware onRefresh={handleRefresh} refreshing={refreshing}>
       <Header title="Perfil" subtitle="Tu cuenta y preferencias" />
 
       {/* ── User card ─────────────────────────────────────────────────────── */}

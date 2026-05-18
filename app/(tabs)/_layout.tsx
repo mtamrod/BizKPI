@@ -54,6 +54,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="recommendations"
+        options={{
+          title: 'IA',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'bulb' : 'bulb-outline'}
+              size={22}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',

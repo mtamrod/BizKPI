@@ -11,6 +11,7 @@ interface Props {
 
 export function DonutChart({ segments, size = 110 }: Props) {
   const { colors } = useTheme();
+  if (!segments.length) return null;
   const strokeWidth = 16;
   const r           = (size - strokeWidth) / 2;
   const circ        = 2 * Math.PI * r;

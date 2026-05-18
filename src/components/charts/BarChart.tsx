@@ -12,6 +12,7 @@ interface Props {
 
 export function BarChart({ points, highlightLast = 2 }: Props) {
   const { colors, isDark } = useTheme();
+  if (!points.length) return null;
   const max = Math.max(...points.map((p) => p.value), 1);
   const TRACK_H = 100;
 
@@ -22,7 +23,7 @@ export function BarChart({ points, highlightLast = 2 }: Props) {
         const highlighted = i >= points.length - highlightLast;
 
         return (
-          <View key={p.label} style={styles.col}>
+          <View key={i} style={styles.col}>
             {/* Value label — only visible on highlighted bars */}
             <Text
               style={[

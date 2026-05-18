@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
+import { isoWeekNumber } from '@/utils/periodHelpers';
 import type { CategorySegment, ChartPoint, DashboardData, KpiMetric } from '@/types';
 import type { PeriodRead } from './periodService';
 
@@ -73,17 +74,20 @@ function pctDelta(current: number | null | undefined, previous: number | null | 
   return ((c - p) / p) * 100;
 }
 
-/** Formats a period's start_date as a short label (e.g. "Ene", "Sem 1", "01") */
-function periodLabel(period: PeriodRead | undefined, fallbackIndex: number): string {
-  if (!period) return `P${fallbackIndex + 1}`;
-
-  const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+/**
+ * Returns a short week label: "S20" (same year) or "S1 '26" (cross-year).
+ * Uses the period's start_date (always a Monday).
+ */
+function weekLabel(
+  period: PeriodRead | undefined,
+  fallbackIndex: number,
+  currentYear: number,
+): string {
+  if (!period) return `S${fallbackIndex + 1}`;
   const d = new Date(`${period.start_date}T00:00:00`);
-
-  if (period.period_type === 'month') return MONTHS[d.getMonth()] ?? `P${fallbackIndex + 1}`;
-  if (period.period_type === 'day') return `${d.getDate()}/${d.getMonth() + 1}`;
-  // week
-  return `S${Math.ceil(d.getDate() / 7)}`;
+  const week = isoWeekNumber(period.start_date);
+  const year = d.getFullYear();
+  return year === currentYear ? `S${week}` : `S${week} '${String(year).slice(2)}`;
 }
 
 // ─── Dashboard builders ───────────────────────────────────────────────────────
@@ -222,32 +226,56 @@ export const kpiService = {
       apiClient.get<PeriodRead[]>('/periods/'),
     ]);
 
-    if (!kpis.length) return EMPTY_DASHBOARD;
+    // business_data is the source of truth: if there are no entries the user
+    // has created, show the empty state regardless of stale KPI records.
+    if (!bDataList.length) return EMPTY_DASHBOARD;
 
-    // kpis is sorted desc by calculated_at
-    const latest = kpis[0]!;
-    const prev = kpis[1];
+    // Only keep KPIs whose period still has business_data (guards against
+    // stale KPI records left after deleting business_data entries).
+    const activePeriodIds = new Set(bDataList.map((bd) => bd.period_id));
+
+    // Deduplicate KPIs by period_id — keep only the latest per period
+    const seenPeriods = new Set<string>();
+    const uniqueKpis = kpis.filter((k) => {
+      if (!activePeriodIds.has(k.period_id)) return false;
+      if (seenPeriods.has(k.period_id)) return false;
+      seenPeriods.add(k.period_id);
+      return true;
+    });
+
+    // If all KPIs are stale (no matching business_data) show empty state
+    if (!uniqueKpis.length) return EMPTY_DASHBOARD;
 
     // Build period lookup map
     const periodMap = new Map(periods.map((p) => [p.id, p]));
+    const currentYear = new Date().getFullYear();
 
-    // Revenue series: last 6 KPIs oldest→newest
-    const revenueSeries: ChartPoint[] = kpis
-      .slice(0, 6)
-      .reverse()
+    // Sort uniqueKpis by period start_date ascending so the current week
+    // is always the rightmost point in both charts.
+    const sortedKpis = [...uniqueKpis].sort((a, b) => {
+      const da = periodMap.get(a.period_id)?.start_date ?? '';
+      const db = periodMap.get(b.period_id)?.start_date ?? '';
+      return da.localeCompare(db);
+    });
+
+    // latest = most recent period (last after ascending sort)
+    const latest = sortedKpis[sortedKpis.length - 1]!;
+    const prev   = sortedKpis[sortedKpis.length - 2];
+
+    // Revenue series: last 6 by date → current week is the rightmost point
+    const revenueSeries: ChartPoint[] = sortedKpis
+      .slice(-6)
       .map((kpi, i) => ({
-        label: periodLabel(periodMap.get(kpi.period_id), i),
+        label: weekLabel(periodMap.get(kpi.period_id), i, currentYear),
         value: Number(kpi.revenue),
       }));
 
-    // Weekly series: last 7 business_data entries oldest→newest
-    const DAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-    const weeklySeries: ChartPoint[] = bDataList
-      .slice(0, 7)
-      .reverse()
-      .map((bd, i) => ({
-        label: DAYS[i % 7] ?? `${i + 1}`,
-        value: Number(bd.total_revenue),
+    // Sales series: last 7 by date → current week is the rightmost bar
+    const weeklySeries: ChartPoint[] = sortedKpis
+      .slice(-7)
+      .map((kpi, i) => ({
+        label: weekLabel(periodMap.get(kpi.period_id), i, currentYear),
+        value: Number(kpi.num_sales),
       }));
 
     const metrics = buildMetrics(latest, prev);

@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,28 +13,18 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PeriodPicker } from '@/components/ui/PeriodPicker';
+import { DayPicker, formatDayLabel } from '@/components/ui/DayPicker';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useDataEntries } from '@/hooks/useDataEntries';
 import { fmt } from '@/utils/formatters';
-import { getDefaultPeriod, formatPeriodRange } from '@/utils/periodHelpers';
-import type { PeriodType } from '@/types';
+import { getDefaultPeriod, formatPeriodRange, isoWeekNumber } from '@/utils/periodHelpers';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function parseNum(s: string): number {
   return parseFloat(s.replace(',', '.').replace(/\s/g, ''));
 }
-
-const PERIOD_OPTIONS: { key: PeriodType; label: string; icon: string }[] = [
-  { key: 'day',   label: 'Día',    icon: 'today-outline' },
-  { key: 'week',  label: 'Semana', icon: 'calendar-outline' },
-  { key: 'month', label: 'Mes',    icon: 'bar-chart-outline' },
-];
-
-const PERIOD_LABEL: Record<PeriodType, string> = {
-  day: 'Día', week: 'Semana', month: 'Mes',
-};
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -83,10 +72,9 @@ export default function DataScreen() {
   const { session } = useAuth();
   const { colors } = useTheme();
   const companyId = session?.activeCompanyId ?? 'co_001';
-  const { entries, addEntry, status } = useDataEntries(companyId);
+  const { entries, addEntry, replaceEntry, refresh, status } = useDataEntries(companyId);
 
   // ── Required fields ──
-  const [period, setPeriod] = useState<PeriodType>('week');
   const initPeriod = getDefaultPeriod('week');
   const [periodStart, setPeriodStart] = useState(initPeriod.start);
   const [periodEnd,   setPeriodEnd]   = useState(initPeriod.end);
@@ -97,8 +85,8 @@ export default function DataScreen() {
 
   // ── Optional fields ──
   const [bestProduct, setBestProduct] = useState('');
-  const [bestDay, setBestDay]         = useState('');
-  const [worstDay, setWorstDay]       = useState('');
+  const [bestDay, setBestDay]         = useState<string | null>(null);
+  const [worstDay, setWorstDay]       = useState<string | null>(null);
   const [observations, setObservations] = useState('');
 
   // ── UI state ──
@@ -142,47 +130,92 @@ export default function DataScreen() {
     return Object.keys(next).length === 0;
   }
 
-  // ── Save ──
-  const handleSave = useCallback(async () => {
-    if (!validate()) return;
+  // ── Save helpers ──
+  function buildInput() {
+    return {
+      period:        'week' as const,
+      periodDate:    periodStart,
+      periodEndDate: periodEnd,
+      totalRevenue:  parseNum(revenue),
+      totalExpenses: parseNum(expenses),
+      totalSales:    parseInt(sales, 10),
+      totalClients:  parseInt(clients, 10),
+      bestProduct:   bestProduct || undefined,
+      bestDay:       bestDay  ? formatDayLabel(bestDay)  : undefined,
+      worstDay:      worstDay ? formatDayLabel(worstDay) : undefined,
+      observations:  observations || undefined,
+    };
+  }
+
+  function resetForm() {
+    const fresh = getDefaultPeriod('week');
+    setPeriodStart(fresh.start);
+    setPeriodEnd(fresh.end);
+    setRevenue('');
+    setExpenses('');
+    setSales('');
+    setClients('');
+    setBestProduct('');
+    setBestDay(null);
+    setWorstDay(null);
+    setObservations('');
+    setErrors({});
+  }
+
+  async function doSave(
+    input: ReturnType<typeof buildInput>,
+    existingId?: string,
+    existingPeriodId?: string,
+  ) {
     try {
-      await addEntry({
-        period,
-        periodDate:    periodStart,
-        periodEndDate: periodEnd,
-        totalRevenue:  parseNum(revenue),
-        totalExpenses: parseNum(expenses),
-        totalSales:    parseInt(sales, 10),
-        totalClients:  parseInt(clients, 10),
-        bestProduct:   bestProduct || undefined,
-        bestDay:       bestDay     || undefined,
-        worstDay:      worstDay    || undefined,
-        observations:  observations || undefined,
-      });
-      // Reset form — vuelve a la semana actual
-      const fresh = getDefaultPeriod(period);
-      setPeriodStart(fresh.start);
-      setPeriodEnd(fresh.end);
-      setRevenue('');
-      setExpenses('');
-      setSales('');
-      setClients('');
-      setBestProduct('');
-      setBestDay('');
-      setWorstDay('');
-      setObservations('');
-      setErrors({});
-      setFeedback('Entrada guardada correctamente.');
+      if (existingId && existingPeriodId) {
+        await replaceEntry(existingId, existingPeriodId, input);
+      } else {
+        await addEntry(input);
+      }
+      resetForm();
+      setFeedback(existingId ? 'Registro de la semana actualizado.' : 'Entrada guardada correctamente.');
       setTimeout(() => setFeedback(''), 3500);
     } catch {
       Alert.alert('Error', 'No se pudo guardar la entrada. Inténtalo de nuevo.');
     }
+  }
+
+  // ── Save ──
+  const handleSave = useCallback(() => {
+    if (!validate()) return;
+
+    const input = buildInput();
+
+    // Check for an existing entry with the same week
+    const existing = entries.find(
+      (e) => e.periodDate === periodStart && e.periodEndDate === periodEnd,
+    );
+
+    if (existing) {
+      const weekNum = isoWeekNumber(periodStart);
+      Alert.alert(
+        'Semana ya registrada',
+        `Ya existe un registro para la S${weekNum} (${formatPeriodRange('week', periodStart, periodEnd)}).\n\nSe sustituirá por los nuevos datos.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Reemplazar',
+            style: 'destructive',
+            onPress: () => doSave(input, existing.id, existing.periodId),
+          },
+        ],
+      );
+      return;
+    }
+
+    doSave(input);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, periodDate, revenue, expenses, sales, clients,
-      bestProduct, bestDay, worstDay, observations, addEntry]);
+  }, [periodStart, periodEnd, revenue, expenses, sales, clients,
+      bestProduct, bestDay, worstDay, observations, entries, addEntry, replaceEntry]);
 
   return (
-    <ScreenWrapper keyboardAware>
+    <ScreenWrapper keyboardAware onRefresh={refresh} refreshing={status === 'loading'}>
       <Header title="Entrada de datos" subtitle="Registra métricas de tu negocio" />
 
       {/* ── Summary card (from last entry) ──────────────────────────────── */}
@@ -192,7 +225,7 @@ export default function DataScreen() {
             <View style={styles.statsTop}>
               <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                 <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                  {PERIOD_LABEL[lastEntry.period]} · {formatPeriodRange(lastEntry.period, lastEntry.periodDate, lastEntry.periodEndDate)}
+                  Semana · {formatPeriodRange('week', lastEntry.periodDate, lastEntry.periodEndDate)}
                 </Text>
               </View>
               <Text style={[styles.statsHint, { color: colors.textSecondary }]}>
@@ -234,61 +267,20 @@ export default function DataScreen() {
       <GlassCard style={styles.formCard}>
         <SectionLabel text="Datos obligatorios" />
 
-        {/* Period selector */}
-        <View style={styles.fieldBlock}>
-          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Período analizado
-          </Text>
-          <View style={styles.periodRow}>
-            {PERIOD_OPTIONS.map((opt) => {
-              const active = period === opt.key;
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  onPress={() => {
-                    setPeriod(opt.key);
-                    const { start, end } = getDefaultPeriod(opt.key);
-                    setPeriodStart(start);
-                    setPeriodEnd(end);
-                  }}
-                  style={[
-                    styles.periodChip,
-                    {
-                      backgroundColor: active ? colors.primary : `${colors.primary}15`,
-                      borderColor: active ? colors.primary : colors.border,
-                    },
-                  ]}
-                  activeOpacity={0.75}
-                >
-                  <Ionicons
-                    name={opt.icon as any}
-                    size={14}
-                    color={active ? '#fff' : colors.textSecondary}
-                  />
-                  <Text
-                    style={[
-                      styles.periodChipText,
-                      { color: active ? '#fff' : colors.textSecondary },
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
         {/* Date picker */}
         <View style={styles.fieldBlock}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Fecha del período *
+            Semana analizada *
           </Text>
           <PeriodPicker
-            type={period}
             startDate={periodStart}
             endDate={periodEnd}
-            onChange={(s, e) => { setPeriodStart(s); setPeriodEnd(e); }}
+            onChange={(s, e) => {
+              setPeriodStart(s);
+              setPeriodEnd(e);
+              setBestDay(null);
+              setWorstDay(null);
+            }}
           />
         </View>
 
@@ -352,23 +344,28 @@ export default function DataScreen() {
           placeholder="Ej. Plan Enterprise, Tarta de chocolate…"
         />
 
-        <View style={styles.twoCol}>
-          <View style={styles.colItem}>
-            <Input
-              label="Día con más ventas"
-              value={bestDay}
-              onChangeText={setBestDay}
-              placeholder="Ej. Martes, 15/06"
-            />
-          </View>
-          <View style={styles.colItem}>
-            <Input
-              label="Día con menos ventas"
-              value={worstDay}
-              onChangeText={setWorstDay}
-              placeholder="Ej. Domingo"
-            />
-          </View>
+        <View style={styles.fieldBlock}>
+          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+            Día con más ventas
+          </Text>
+          <DayPicker
+            weekStart={periodStart}
+            value={bestDay}
+            onChange={setBestDay}
+            excludeDate={worstDay}
+          />
+        </View>
+
+        <View style={styles.fieldBlock}>
+          <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+            Día con menos ventas
+          </Text>
+          <DayPicker
+            weekStart={periodStart}
+            value={worstDay}
+            onChange={setWorstDay}
+            excludeDate={bestDay}
+          />
         </View>
 
         <Input
@@ -414,7 +411,7 @@ export default function DataScreen() {
                 <View style={styles.entryHeader}>
                   <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                     <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                      {PERIOD_LABEL[entry.period]}
+                      Semana
                     </Text>
                   </View>
                   <Text style={[styles.entryDate, { color: colors.textSecondary }]}>
@@ -607,24 +604,6 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '500',
-  },
-  periodRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  periodChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  periodChipText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   periodPill: {
     borderRadius: 999,

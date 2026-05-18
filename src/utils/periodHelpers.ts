@@ -60,6 +60,28 @@ export function getDefaultPeriod(type: PeriodType): { start: string; end: string
   };
 }
 
+// ─── ISO week number ─────────────────────────────────────────────────────────
+
+/**
+ * Returns the ISO 8601 week number for a given date string (YYYY-MM-DD).
+ * Week 1 is the week containing January 4th.
+ *
+ * Uses UTC arithmetic throughout to avoid DST offsets causing off-by-one errors
+ * (e.g. Spain's +1h DST shift in late March would make a 140-day span look like
+ * 139.958... days in local time, causing Math.floor to return the wrong week).
+ */
+export function isoWeekNumber(dateStr: string): number {
+  const [y, m, dd] = dateStr.slice(0, 10).split('-').map(Number) as [number, number, number];
+  const d = Date.UTC(y, m - 1, dd);
+
+  // Monday of ISO week 1 = Monday on or before Jan 4
+  const jan4 = Date.UTC(y, 0, 4);
+  const jan4Dow = new Date(jan4).getUTCDay(); // 0 = Sun
+  const weekOneMonday = jan4 - ((jan4Dow + 6) % 7) * 86400000;
+
+  return Math.floor((d - weekOneMonday) / (7 * 86400000)) + 1;
+}
+
 // ─── Display formatting ───────────────────────────────────────────────────────
 
 const MONTHS_LONG  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',

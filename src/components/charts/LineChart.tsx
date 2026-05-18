@@ -28,6 +28,7 @@ function buildCoords(
 
 export function LineChart({ points, height = 160 }: Props) {
   const { colors } = useTheme();
+  if (!points.length) return null;
   const W = 320;
   const H = height;
   const PAD = 16;
@@ -66,8 +67,8 @@ export function LineChart({ points, height = 160 }: Props) {
         ))}
       </Svg>
       <View style={styles.labels}>
-        {points.map((p) => (
-          <Text key={p.label} style={[styles.label, { color: colors.textSecondary }]}>
+        {points.map((p, i) => (
+          <Text key={i} style={[styles.label, { color: colors.textSecondary }]}>
             {p.label}
           </Text>
         ))}

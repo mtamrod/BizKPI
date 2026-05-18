@@ -25,7 +25,8 @@ type AuthAction =
   | { type: 'LOGIN_START' }
   | { type: 'LOGIN_SUCCESS'; session: UserSession }
   | { type: 'LOGIN_ERROR'; error: string }
-  | { type: 'LOGOUT' };
+  | { type: 'LOGOUT' }
+  | { type: 'UPDATE_NAME'; name: string };
 
 function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
@@ -39,6 +40,15 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
       return { ...state, status: 'error', error: action.error };
     case 'LOGOUT':
       return { session: null, status: 'idle', hydrated: true, error: null };
+    case 'UPDATE_NAME':
+      if (!state.session) return state;
+      return {
+        ...state,
+        session: {
+          ...state.session,
+          user: { ...state.session.user, name: action.name },
+        },
+      };
     default:
       return state;
   }
@@ -54,6 +64,8 @@ interface AuthContextValue {
   error: string | null;
   login: (input: LoginInput) => Promise<void>;
   logout: () => Promise<void>;
+  /** Updates the business name in the session (call after saving in profile). */
+  updateUserName: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -68,11 +80,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
   });
 
-  // Restore persisted session on mount
+  // Restore persisted session on mount, then lazily load the business name
+  // from the backend without blocking hydration.
   useEffect(() => {
     let active = true;
     authService.loadSession().then((session) => {
-      if (active) dispatch({ type: 'RESTORE', session });
+      if (!active) return;
+      dispatch({ type: 'RESTORE', session });
+      if (session) {
+        // Background fetch — updates the name once the backend responds.
+        userService.getProfile().then((profile) => {
+          if (active && profile?.business_name) {
+            dispatch({ type: 'UPDATE_NAME', name: profile.business_name });
+          }
+        }).catch(() => {});
+      }
     });
     return () => { active = false; };
   }, []);
@@ -123,14 +145,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'LOGOUT' });
   }, []);
 
+  const updateUserName = useCallback((name: string) => {
+    dispatch({ type: 'UPDATE_NAME', name });
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
       isAuthenticated: Boolean(state.session),
       login,
       logout,
+      updateUserName,
     }),
-    [state, login, logout],
+    [state, login, logout, updateUserName],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

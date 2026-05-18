@@ -41,6 +41,13 @@ def get_recommendation(period_id: str, user_id: CurrentUser):
     return result.data
 
 
+@router.delete("/{period_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recommendation(period_id: str, user_id: CurrentUser):
+    """Deletes the stored recommendation for a period (e.g. when its data is replaced)."""
+    db = get_supabase()
+    db.table("ai_recommendations").delete().eq("period_id", period_id).eq("user_id", user_id).execute()
+
+
 @router.post("/{period_id}/generate", response_model=RecommendationRead, status_code=status.HTTP_201_CREATED)
 async def generate_recommendation(period_id: str, user_id: CurrentUser):
     """

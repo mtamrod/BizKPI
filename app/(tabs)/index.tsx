@@ -1,4 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -10,6 +12,7 @@ import { DonutChart } from '@/components/charts/DonutChart';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/theme/ThemeContext';
 import { useKPIs } from '@/hooks/useKPIs';
+import { isoWeekNumber, dateToISO } from '@/utils/periodHelpers';
 import { Ionicons } from '@expo/vector-icons';
 import type { MetricIcon } from '@/types';
 
@@ -32,6 +35,11 @@ export default function DashboardScreen() {
   const { colors } = useTheme();
   const companyId = session?.activeCompanyId ?? 'co_001';
   const { data, status, refresh } = useKPIs(companyId);
+
+  // Must be before any early returns — Rules of Hooks.
+  useFocusEffect(
+    useCallback(() => { refresh(); }, [refresh]),
+  );
 
   if (status === 'error' && !data) {
     return (
@@ -66,13 +74,14 @@ export default function DashboardScreen() {
 
   const businessName = session?.user.name ?? 'Mi empresa';
   const firstName = businessName.split(' ')[0] ?? 'usuario';
+  const currentWeek = isoWeekNumber(dateToISO(new Date()));
 
   return (
-    <ScreenWrapper>
+    <ScreenWrapper onRefresh={refresh} refreshing={status === 'loading' && !!data}>
       {/* Header */}
       <Header
         title={`${greeting()}, ${firstName}`}
-        subtitle="Panel principal"
+        subtitle={`Semana ${currentWeek} · Panel principal`}
       />
 
       {/* Empresa + estado */}
@@ -89,9 +98,9 @@ export default function DashboardScreen() {
               {session?.user.email ?? ''}
             </Text>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: `${colors.accent}22` }]}>
-            <Text style={[styles.statusBadgeText, { color: colors.accentLight }]}>
-              Estable
+          <View style={[styles.statusBadge, { backgroundColor: `${colors.primary}22` }]}>
+            <Text style={[styles.statusBadgeText, { color: colors.primaryLight }]}>
+              S{currentWeek}
             </Text>
           </View>
         </View>
@@ -138,10 +147,10 @@ export default function DashboardScreen() {
         <View style={styles.chartHeader}>
           <View style={styles.chartLabels}>
             <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Ingresos mensuales
+              Ingresos por semana
             </Text>
             <Text style={[styles.chartSub, { color: colors.textSecondary }]}>
-              Tendencia de los últimos 6 meses
+              Tendencia de las últimas 6 semanas
             </Text>
           </View>
           <Text style={[styles.chartValue, { color: colors.primaryLight }]}>
@@ -156,10 +165,10 @@ export default function DashboardScreen() {
         <GlassCard style={StyleSheet.flatten([styles.chartCard, styles.chartHalf])}>
           <View style={styles.chartLabels}>
             <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Rendimiento semanal
+              Ventas por semana
             </Text>
             <Text style={[styles.chartSub, { color: colors.textSecondary }]}>
-              Últimos 7 días
+              Últimas semanas
             </Text>
           </View>
           <BarChart points={data.weeklySeries} />

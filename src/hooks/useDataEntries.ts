@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { dataEntryService } from '@/services/dataEntryService';
+import { recommendationService } from '@/services/recommendationService';
 import type { AsyncStatus, CreateEntryInput, DataEntry } from '@/types';
 
 interface State {
@@ -57,6 +58,7 @@ export function useDataEntries(companyId: string) {
       const optimistic: DataEntry = {
         id: tempId,
         companyId,
+        periodId:      '',
         period:        input.period,
         periodDate:    input.periodDate,
         periodEndDate: input.periodEndDate,
@@ -83,5 +85,19 @@ export function useDataEntries(companyId: string) {
     [companyId, load],
   );
 
-  return { ...state, addEntry, refresh: load };
+  /** Deletes the entry with `oldId` (and its AI recommendation) then creates a
+   *  fresh one. Used when the user confirms overwriting an existing week.
+   *  No optimistic update — the user already acknowledged the destructive action. */
+  const replaceEntry = useCallback(
+    async (oldId: string, periodId: string, input: Omit<CreateEntryInput, 'companyId'>) => {
+      // Silently delete any existing AI recommendation for this period
+      await recommendationService.delete(periodId).catch(() => {});
+      await dataEntryService.deleteEntry(oldId);
+      await dataEntryService.addEntry({ ...input, companyId });
+      load();
+    },
+    [companyId, load],
+  );
+
+  return { ...state, addEntry, replaceEntry, refresh: load };
 }
