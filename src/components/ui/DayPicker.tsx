@@ -8,16 +8,25 @@
  */
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/theme/ThemeContext';
 import { dateToISO, fmtDDMM, isoToDate } from '@/utils/periodHelpers';
 
-const DAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const DAY_NAMES_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-/** Returns "Martes 12/05" for a given ISO date string */
+/** Returns "Martes 12/05" — always in Spanish for DB/AI consistency */
 export function formatDayLabel(iso: string): string {
   const d = isoToDate(iso);
-  return `${DAY_NAMES[d.getDay()]} ${fmtDDMM(iso)}`;
+  return `${DAY_NAMES_ES[d.getDay()]} ${fmtDDMM(iso)}`;
+}
+
+/** Returns locale-aware "Lunes 12/05" for display purposes */
+function formatDayLabelLocale(iso: string, language: string): string {
+  const d = isoToDate(iso);
+  const dayName = new Intl.DateTimeFormat(language, { weekday: 'long' }).format(d);
+  const capitalized = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+  return `${capitalized} ${fmtDDMM(iso)}`;
 }
 
 interface Props {
@@ -31,7 +40,8 @@ interface Props {
 }
 
 export function DayPicker({ weekStart, value, onChange, excludeDate }: Props) {
-  const { colors } = useTheme();
+  const { colors, language } = useTheme();
+  const { t } = useTranslation();
 
   // Build the 7 days of the week
   const weekDays: string[] = Array.from({ length: 7 }, (_, i) => {
@@ -74,7 +84,7 @@ export function DayPicker({ weekStart, value, onChange, excludeDate }: Props) {
     onChange(weekDays[ni]!);
   }
 
-  const label = value ? formatDayLabel(value) : 'Sin seleccionar';
+  const label = value ? formatDayLabelLocale(value, language) : t('data_no_day_selected');
   const labelColor = value ? colors.textPrimary : colors.textSecondary;
 
   return (

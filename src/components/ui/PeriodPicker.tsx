@@ -21,8 +21,15 @@ interface Props {
   onChange: (start: string, end: string) => void;
 }
 
+function shortDay(d: Date, language: string): string {
+  return new Intl.DateTimeFormat(language, { weekday: 'short' })
+    .format(d)
+    .replace(/\.$/, '')
+    .replace(/^./, c => c.toUpperCase());
+}
+
 export function PeriodPicker({ startDate, endDate, onChange }: Props) {
-  const { colors } = useTheme();
+  const { colors, language } = useTheme();
   const end = isoToDate(endDate);
 
   // The current week's Monday — cannot navigate past this
@@ -39,7 +46,9 @@ export function PeriodPicker({ startDate, endDate, onChange }: Props) {
   }
 
   const week = isoWeekNumber(startDate);
-  const label = `S${week} · Lun ${fmtDDMM(startDate)} – Dom ${fmtDDMM(endDate)}/${end.getFullYear()}`;
+  const monLabel = shortDay(isoToDate(startDate), language);
+  const sunLabel = shortDay(end, language);
+  const label = `S${week} · ${monLabel} ${fmtDDMM(startDate)} – ${sunLabel} ${fmtDDMM(endDate)}/${end.getFullYear()}`;
 
   return (
     <View

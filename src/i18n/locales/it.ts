@@ -158,4 +158,5 @@ export default {
   data_week_exists_msg: 'Esiste già una registrazione per la settimana S{{week}} ({{range}}).\n\nVerrà sostituita con i nuovi dati.',
   data_replace: 'Sostituisci',
   data_period_week: 'Settimana',
+  data_no_day_selected: 'Non selezionato',
 } as const;
