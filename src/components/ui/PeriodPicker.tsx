@@ -5,6 +5,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import {
   dateToISO,
@@ -30,6 +31,7 @@ function shortDay(d: Date, language: string): string {
 
 export function PeriodPicker({ startDate, endDate, onChange }: Props) {
   const { colors, language } = useTheme();
+  const { t } = useTranslation();
   const end = isoToDate(endDate);
 
   // The current week's Monday — cannot navigate past this
@@ -48,7 +50,7 @@ export function PeriodPicker({ startDate, endDate, onChange }: Props) {
   const week = isoWeekNumber(startDate);
   const monLabel = shortDay(isoToDate(startDate), language);
   const sunLabel = shortDay(end, language);
-  const label = `S${week} · ${monLabel} ${fmtDDMM(startDate)} – ${sunLabel} ${fmtDDMM(endDate)}/${end.getFullYear()}`;
+  const label = `${t('week_abbr')}${week} · ${monLabel} ${fmtDDMM(startDate)} – ${sunLabel} ${fmtDDMM(endDate)}/${end.getFullYear()}`;
 
   return (
     <View

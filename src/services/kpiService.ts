@@ -86,11 +86,12 @@ function weekLabel(
   fallbackIndex: number,
   currentYear: number,
 ): string {
-  if (!period) return `S${fallbackIndex + 1}`;
+  const abbr = t('week_abbr');
+  if (!period) return `${abbr}${fallbackIndex + 1}`;
   const d = new Date(`${period.start_date}T00:00:00`);
   const week = isoWeekNumber(period.start_date);
   const year = d.getFullYear();
-  return year === currentYear ? `S${week}` : `S${week} '${String(year).slice(2)}`;
+  return year === currentYear ? `${abbr}${week}` : `${abbr}${week} '${String(year).slice(2)}`;
 }
 
 // ─── Dashboard builders ───────────────────────────────────────────────────────

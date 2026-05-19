@@ -84,9 +84,6 @@ export function isoWeekNumber(dateStr: string): number {
 
 // ─── Display formatting ───────────────────────────────────────────────────────
 
-const MONTHS_LONG  = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
 /** DD/MM/YYYY */
 export function fmtDDMMYYYY(iso: string): string {
   const d = isoToDate(iso);
@@ -99,16 +96,24 @@ export function fmtDDMM(iso: string): string {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
 }
 
+function shortDay(d: Date, language: string): string {
+  return new Intl.DateTimeFormat(language, { weekday: 'short' })
+    .format(d)
+    .replace(/\.$/, '')
+    .replace(/^./, c => c.toUpperCase());
+}
+
 /**
  * Human-readable period label:
  *  day   → "15/05/2026"
- *  week  → "Lun 11/05 – Dom 17/05/2026"
- *  month → "Mayo 2026"
+ *  week  → "Mon 11/05 – Sun 17/05/2026"  (day names localised)
+ *  month → "Mayo 2026"  (month name localised)
  */
 export function formatPeriodRange(
   type: PeriodType,
   startISO: string,
   endISO: string,
+  language = 'es',
 ): string {
   if (type === 'day') return fmtDDMMYYYY(startISO);
 
@@ -116,9 +121,12 @@ export function formatPeriodRange(
   const e = isoToDate(endISO);
 
   if (type === 'week') {
-    return `Lun ${fmtDDMM(startISO)} – Dom ${fmtDDMM(endISO)}/${e.getFullYear()}`;
+    const monLabel = shortDay(s, language);
+    const sunLabel = shortDay(e, language);
+    return `${monLabel} ${fmtDDMM(startISO)} – ${sunLabel} ${fmtDDMM(endISO)}/${e.getFullYear()}`;
   }
 
   // month
-  return `${MONTHS_LONG[s.getMonth()]} ${s.getFullYear()}`;
+  const monthName = new Intl.DateTimeFormat(language, { month: 'long' }).format(s);
+  return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${s.getFullYear()}`;
 }

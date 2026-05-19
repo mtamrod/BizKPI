@@ -39,6 +39,7 @@ function PeriodChip({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const week = isoWeekNumber(period.start_date);
 
   return (
@@ -54,7 +55,7 @@ function PeriodChip({
       ]}
     >
       <Text style={[styles.chipWeek, { color: selected ? '#fff' : colors.primaryLight }]}>
-        S{week}
+        {t('week_abbr')}{week}
       </Text>
       {hasReco && (
         <View style={[styles.chipDot, { backgroundColor: selected ? '#fff' : colors.accentLight }]} />
@@ -195,7 +196,7 @@ function RecoContent({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function RecommendationsScreen() {
-  const { colors } = useTheme();
+  const { colors, language } = useTheme();
   const { t } = useTranslation();
   const { periods, recommendations, generatingIds, loadStatus, refresh, generate, remove } = useRecommendations();
 
@@ -289,11 +290,11 @@ export default function RecommendationsScreen() {
           <View style={styles.periodHeaderRow}>
             <View style={[styles.weekBadge, { backgroundColor: `${colors.primary}22` }]}>
               <Text style={[styles.weekBadgeText, { color: colors.primaryLight }]}>
-                S{isoWeekNumber(selectedPeriod.start_date)}
+                {t('week_abbr')}{isoWeekNumber(selectedPeriod.start_date)}
               </Text>
             </View>
             <Text style={[styles.periodRange, { color: colors.textPrimary }]}>
-              {formatPeriodRange('week', selectedPeriod.start_date, selectedPeriod.end_date)}
+              {formatPeriodRange('week', selectedPeriod.start_date, selectedPeriod.end_date, language)}
             </Text>
           </View>
         </GlassCard>

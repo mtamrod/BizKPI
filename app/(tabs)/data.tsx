@@ -72,7 +72,7 @@ function StatCell({
 
 export default function DataScreen() {
   const { session } = useAuth();
-  const { colors, currency } = useTheme();
+  const { colors, currency, language } = useTheme();
   const { t } = useTranslation();
   const companyId = session?.activeCompanyId ?? 'co_001';
   const { entries, addEntry, replaceEntry, refresh, status } = useDataEntries(companyId);
@@ -199,7 +199,7 @@ export default function DataScreen() {
       const weekNum = isoWeekNumber(periodStart);
       Alert.alert(
         t('data_week_exists_title'),
-        t('data_week_exists_msg', { week: weekNum, range: formatPeriodRange('week', periodStart, periodEnd) }),
+        t('data_week_exists_msg', { week: weekNum, range: formatPeriodRange('week', periodStart, periodEnd, language) }),
         [
           { text: t('login_recover_cancel'), style: 'cancel' },
           {
@@ -228,7 +228,7 @@ export default function DataScreen() {
             <View style={styles.statsTop}>
               <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                 <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                  {t('data_period_week')} · {formatPeriodRange('week', lastEntry.periodDate, lastEntry.periodEndDate)}
+                  {t('data_period_week')} · {formatPeriodRange('week', lastEntry.periodDate, lastEntry.periodEndDate, language)}
                 </Text>
               </View>
               <Text style={[styles.statsHint, { color: colors.textSecondary }]}>
@@ -418,7 +418,7 @@ export default function DataScreen() {
                     </Text>
                   </View>
                   <Text style={[styles.entryDate, { color: colors.textSecondary }]}>
-                    {formatPeriodRange(entry.period, entry.periodDate, entry.periodEndDate)}
+                    {formatPeriodRange(entry.period, entry.periodDate, entry.periodEndDate, language)}
                   </Text>
                   <View style={styles.entryDateSpacer} />
                   {entry.source === 'import' && (

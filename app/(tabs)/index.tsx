@@ -98,7 +98,7 @@ export default function DashboardScreen() {
           </View>
           <View style={[styles.statusBadge, { backgroundColor: `${colors.primary}22` }]}>
             <Text style={[styles.statusBadgeText, { color: colors.primaryLight }]}>
-              S{currentWeek}
+              {t('week_abbr')}{currentWeek}
             </Text>
           </View>
         </View>

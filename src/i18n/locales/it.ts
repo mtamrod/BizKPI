@@ -98,6 +98,7 @@ export default {
   reco_highlights: 'Punti chiave',
   reco_actions: 'Azioni raccomandate',
   reco_forecast: 'Previsione settimana prossima',
+  week_abbr: 'S',
   reco_regenerate: 'Rigenera raccomandazioni',
   reco_delete: 'Elimina raccomandazioni',
   reco_delete_title: 'Elimina raccomandazioni',
