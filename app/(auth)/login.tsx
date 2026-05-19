@@ -8,24 +8,64 @@ import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme } from '@/theme/ThemeContext';
 
+type Mode = 'login' | 'register';
+
 export default function LoginScreen() {
-  const { login, status, error } = useAuth();
+  const { login, register, status, error } = useAuth();
   const { colors } = useTheme();
 
-  const [email, setEmail]         = useState('demo@bizkpi.com');
-  const [password, setPassword]   = useState('BizKPI2024');
-  const [rememberMe, setRememberMe] = useState(true);
-  const [localError, setLocalError] = useState('');
+  const [mode, setMode]               = useState<Mode>('login');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [rememberMe, setRememberMe]   = useState(true);
+  const [localError, setLocalError]   = useState('');
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setLocalError('');
+    setEmail('');
+    setPassword('');
+    setBusinessName('');
+  }
+
+  function validate(): boolean {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailOk) { setLocalError('Introduce un correo válido.'); return false; }
+    if (password.length < 6) { setLocalError('La contraseña debe tener al menos 6 caracteres.'); return false; }
+    if (mode === 'register' && !businessName.trim()) {
+      setLocalError('Introduce el nombre de tu negocio.'); return false;
+    }
+    return true;
+  }
 
   async function handleSubmit() {
     setLocalError('');
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!emailOk) { setLocalError('Introduce un correo válido.'); return; }
-    if (password.length < 6) { setLocalError('La contraseña debe tener al menos 6 caracteres.'); return; }
-    await login({ email: email.trim().toLowerCase(), password, rememberMe });
+    if (!validate()) return;
+
+    if (mode === 'login') {
+      await login({ email: email.trim().toLowerCase(), password, rememberMe });
+      return;
+    }
+
+    // Register
+    const needsConfirmation = await register({
+      email: email.trim().toLowerCase(),
+      password,
+      businessName: businessName.trim(),
+    });
+
+    if (needsConfirmation) {
+      Alert.alert(
+        'Revisa tu correo',
+        'Te hemos enviado un enlace de confirmación. Confirma tu cuenta y luego inicia sesión.',
+        [{ text: 'Entendido', onPress: () => switchMode('login') }],
+      );
+    }
   }
 
   const displayError = localError || error;
+  const isLoading = status === 'loading';
 
   return (
     <ScreenWrapper scrollable keyboardAware contentStyle={styles.content}>
@@ -41,12 +81,26 @@ export default function LoginScreen() {
       </View>
 
       <GlassCard style={styles.card}>
-        <Text style={[styles.welcome, { color: colors.textPrimary }]}>Bienvenido</Text>
+        <Text style={[styles.welcome, { color: colors.textPrimary }]}>
+          {mode === 'login' ? 'Bienvenido' : 'Crear cuenta'}
+        </Text>
         <Text style={[styles.desc, { color: colors.textSecondary }]}>
-          Centraliza ingresos, usuarios y rendimiento operativo desde una sola vista móvil.
+          {mode === 'login'
+            ? 'Accede a tu panel de KPIs y rendimiento operativo.'
+            : 'Regístrate para empezar a registrar los KPIs de tu negocio.'}
         </Text>
 
         <View style={styles.form}>
+          {mode === 'register' && (
+            <Input
+              label="Nombre del negocio"
+              value={businessName}
+              onChangeText={setBusinessName}
+              placeholder="Ej. Cafetería Aurora"
+              autoCapitalize="words"
+              leftIcon="business-outline"
+            />
+          )}
           <Input
             label="Correo electrónico"
             value={email}
@@ -61,59 +115,88 @@ export default function LoginScreen() {
             label="Contraseña"
             value={password}
             onChangeText={setPassword}
-            placeholder="Introduce tu contraseña"
+            placeholder={mode === 'register' ? 'Mínimo 6 caracteres' : 'Introduce tu contraseña'}
             secureTextEntry
             leftIcon="lock-closed-outline"
           />
         </View>
 
-        {/* Remember me */}
-        <View style={[styles.rememberRow, { borderColor: colors.border, backgroundColor: colors.glass }]}>
-          <View style={styles.rememberText}>
-            <Text style={[styles.rememberTitle, { color: colors.textPrimary }]}>Recordar sesión</Text>
-            <Text style={[styles.rememberSub, { color: colors.textSecondary }]}>
-              Persiste tu acceso entre aperturas
+        {/* Remember me — solo en login */}
+        {mode === 'login' && (
+          <View style={[styles.rememberRow, { borderColor: colors.border, backgroundColor: colors.glass }]}>
+            <View style={styles.rememberText}>
+              <Text style={[styles.rememberTitle, { color: colors.textPrimary }]}>Recordar sesión</Text>
+              <Text style={[styles.rememberSub, { color: colors.textSecondary }]}>
+                Persiste tu acceso entre aperturas
+              </Text>
+            </View>
+            <Switch
+              value={rememberMe}
+              onValueChange={setRememberMe}
+              trackColor={{ false: colors.border, true: `${colors.primary}88` }}
+              thumbColor={rememberMe ? colors.primary : colors.textSecondary}
+            />
+          </View>
+        )}
+
+        {/* Forgot password — solo en login */}
+        {mode === 'login' && (
+          <View style={styles.forgotRow}>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+              ¿Olvidaste tu contraseña?
+            </Text>
+            <Text
+              style={[styles.link, { color: colors.primaryLight }]}
+              onPress={() =>
+                Alert.alert(
+                  'Recuperar contraseña',
+                  'Introduce tu correo en el campo y pulsa "Recuperar". Te enviaremos un enlace.',
+                  [
+                    { text: 'Cancelar', style: 'cancel' },
+                    {
+                      text: 'Enviar enlace',
+                      onPress: async () => {
+                        if (!email.trim()) {
+                          Alert.alert('Introduce tu correo primero.');
+                          return;
+                        }
+                        const { supabase } = await import('@/lib/supabaseClient');
+                        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim());
+                        if (err) Alert.alert('Error', err.message);
+                        else Alert.alert('Correo enviado', `Revisa ${email.trim()} para restablecer tu contraseña.`);
+                      },
+                    },
+                  ],
+                )
+              }
+            >
+              Recuperar
             </Text>
           </View>
-          <Switch
-            value={rememberMe}
-            onValueChange={setRememberMe}
-            trackColor={{ false: colors.border, true: `${colors.primary}88` }}
-            thumbColor={rememberMe ? colors.primary : colors.textSecondary}
-          />
-        </View>
-
-        {/* Forgot password */}
-        <View style={styles.forgotRow}>
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>
-            Acceso demo disponible
-          </Text>
-          <Text
-            style={[styles.link, { color: colors.primaryLight }]}
-            onPress={() =>
-              Alert.alert(
-                'Recuperar contraseña',
-                'El flujo real se activará cuando exista backend. En esta v1 usa las credenciales demo.',
-              )
-            }
-          >
-            Recuperar contraseña
-          </Text>
-        </View>
+        )}
 
         {displayError ? (
           <Text style={[styles.errorText, { color: colors.error }]}>{displayError}</Text>
         ) : null}
 
         <Button
-          label="Iniciar sesión"
+          label={mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
           onPress={handleSubmit}
-          loading={status === 'loading'}
+          loading={isLoading}
         />
 
-        <Text style={[styles.demoHint, { color: colors.textSecondary }]}>
-          Demo: demo@bizkpi.com · BizKPI2024
-        </Text>
+        {/* Toggle mode */}
+        <View style={styles.toggleRow}>
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>
+            {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+          </Text>
+          <Text
+            style={[styles.link, { color: colors.primaryLight }]}
+            onPress={() => switchMode(mode === 'login' ? 'register' : 'login')}
+          >
+            {mode === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
+          </Text>
+        </View>
       </GlassCard>
     </ScreenWrapper>
   );
@@ -186,6 +269,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
   hint: {
     fontSize: 12,
   },
@@ -197,9 +286,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     lineHeight: 18,
-  },
-  demoHint: {
-    fontSize: 12,
-    textAlign: 'center',
   },
 });

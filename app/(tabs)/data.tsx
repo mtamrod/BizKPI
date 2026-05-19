@@ -399,7 +399,7 @@ export default function DataScreen() {
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
             Entradas recientes
           </Text>
-          {entries.slice(0, 8).map((entry) => {
+          {entries.slice(0, 3).map((entry) => {
             const profit = entry.totalRevenue - entry.totalExpenses;
             const profitPositive = profit >= 0;
             const margin = entry.totalRevenue > 0

@@ -50,17 +50,17 @@ function n(v: number | null | undefined): number {
   return isNaN(num) ? 0 : num;
 }
 
-function formatCurrency(value: number | null | undefined): string {
+function formatCurrency(value: number | null | undefined, symbol = '€'): string {
   const v = n(value);
   if (v >= 1_000_000) {
     const m = v / 1_000_000;
-    return `€${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+    return `${symbol}${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
   }
   if (v >= 1_000) {
     const k = v / 1_000;
-    return `€${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
+    return `${symbol}${k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)}k`;
   }
-  return `€${Math.round(v).toLocaleString('es-ES')}`;
+  return `${symbol}${Math.round(v).toLocaleString('es-ES')}`;
 }
 
 function formatPct(value: number | null | undefined): string {
@@ -92,7 +92,7 @@ function weekLabel(
 
 // ─── Dashboard builders ───────────────────────────────────────────────────────
 
-function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
+function buildMetrics(latest: KpiRead, prev: KpiRead | undefined, currency: string): KpiMetric[] {
   const revDelta = prev ? pctDelta(latest.revenue, prev.revenue) : 0;
   const custDelta = prev ? pctDelta(latest.num_customers, prev.num_customers) : 0;
   const marginDelta = prev ? n(latest.profit_margin) - n(prev.profit_margin) : 0;
@@ -103,7 +103,7 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined): KpiMetric[] {
       id: 'revenue',
       label: 'Ingresos',
       value: n(latest.revenue),
-      formattedValue: formatCurrency(latest.revenue),
+      formattedValue: formatCurrency(latest.revenue, currency),
       delta: Math.abs(revDelta),
       deltaLabel: 'vs. período anterior',
       trend: revDelta >= 0 ? 'up' : 'down',
@@ -168,12 +168,12 @@ function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | un
   ];
 }
 
-function buildHeadline(latest: KpiRead): { headline: string; subtitle: string } {
+function buildHeadline(latest: KpiRead, currency: string): { headline: string; subtitle: string } {
   const margin = n(latest.profit_margin);
   if (margin >= 20) {
     return {
       headline: 'Margen sólido y rendimiento sobre objetivo.',
-      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Ticket medio ${formatCurrency(latest.avg_ticket)}.`,
+      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Ticket medio ${formatCurrency(latest.avg_ticket, currency)}.`,
     };
   }
   if (margin >= 0) {
@@ -184,7 +184,7 @@ function buildHeadline(latest: KpiRead): { headline: string; subtitle: string } 
   }
   return {
     headline: 'Período con resultado negativo.',
-    subtitle: `Pérdida de ${formatCurrency(Math.abs(n(latest.net_profit)))}. Analiza el detalle de gastos.`,
+    subtitle: `Pérdida de ${formatCurrency(Math.abs(n(latest.net_profit)), currency)}. Analiza el detalle de gastos.`,
   };
 }
 
@@ -218,7 +218,7 @@ const EMPTY_DASHBOARD: DashboardData = {
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const kpiService = {
-  async getDashboard(_companyId: string): Promise<DashboardData> {
+  async getDashboard(_companyId: string, currency = '€'): Promise<DashboardData> {
     // Fetch all data in parallel
     const [kpis, bDataList, periods] = await Promise.all([
       apiClient.get<KpiRead[]>('/kpis/'),
@@ -278,9 +278,9 @@ export const kpiService = {
         value: Number(kpi.num_sales),
       }));
 
-    const metrics = buildMetrics(latest, prev);
+    const metrics = buildMetrics(latest, prev, currency);
     const categorySeries = buildCategorySeries(latest, bDataList[0]);
-    const { headline, subtitle } = buildHeadline(latest);
+    const { headline, subtitle } = buildHeadline(latest, currency);
 
     return { headline, subtitle, metrics, revenueSeries, weeklySeries, categorySeries };
   },

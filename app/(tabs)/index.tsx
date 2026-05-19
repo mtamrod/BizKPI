@@ -32,9 +32,9 @@ function greeting() {
 
 export default function DashboardScreen() {
   const { session } = useAuth();
-  const { colors } = useTheme();
+  const { colors, currency } = useTheme();
   const companyId = session?.activeCompanyId ?? 'co_001';
-  const { data, status, refresh } = useKPIs(companyId);
+  const { data, status, refresh } = useKPIs(companyId, currency);
 
   // Must be before any early returns — Rules of Hooks.
   useFocusEffect(

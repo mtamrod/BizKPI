@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const STORAGE_KEYS = {
   AUTH_SESSION:      '@bizkpi/auth_session',
   THEME_PREFERENCE:  '@bizkpi/theme',
+  CURRENCY:          '@bizkpi/currency',
   DATA_ENTRIES:      '@bizkpi/data_entries',
   ACTIVE_COMPANY:    '@bizkpi/active_company',
 } as const;

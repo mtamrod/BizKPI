@@ -22,7 +22,7 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useKPIs(companyId: string) {
+export function useKPIs(companyId: string, currency = '€') {
   const [state, dispatch] = useReducer(reducer, {
     data: null,
     status: 'idle',
@@ -32,12 +32,12 @@ export function useKPIs(companyId: string) {
   const load = useCallback(async () => {
     dispatch({ type: 'FETCH_START' });
     try {
-      const data = await kpiService.getDashboard(companyId);
+      const data = await kpiService.getDashboard(companyId, currency);
       dispatch({ type: 'FETCH_SUCCESS', data });
     } catch {
       dispatch({ type: 'FETCH_ERROR', error: 'No se pudieron cargar los KPIs.' });
     }
-  }, [companyId]);
+  }, [companyId, currency]);
 
   useEffect(() => { load(); }, [load]);
 

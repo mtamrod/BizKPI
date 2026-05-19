@@ -15,7 +15,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/store/AuthContext';
-import { useTheme } from '@/theme/ThemeContext';
+import { useTheme, CURRENCIES, type CurrencySymbol } from '@/theme/ThemeContext';
 import { userService, type UserProfile } from '@/services/userService';
 import { fmt } from '@/utils/formatters';
 import type { ThemeMode } from '@/types';
@@ -29,7 +29,7 @@ function SectionTitle({ label }: { label: string }) {
 
 export default function ProfileScreen() {
   const { session, logout, updateUserName } = useAuth();
-  const { colors, mode, setTheme } = useTheme();
+  const { colors, mode, setTheme, currency, setCurrency } = useTheme();
 
   const [profile, setProfile]           = useState<UserProfile | null>(null);
   const [editingName, setEditingName]   = useState(false);
@@ -190,6 +190,37 @@ export default function ProfileScreen() {
         </View>
       </GlassCard>
 
+      {/* ── Moneda ───────────────────────────────────────────────────────── */}
+      <SectionTitle label="Moneda" />
+      <GlassCard style={styles.themeCard}>
+        <View style={styles.themeRow}>
+          {CURRENCIES.map(({ symbol, label }) => {
+            const active = currency === symbol;
+            return (
+              <TouchableOpacity
+                key={symbol}
+                onPress={() => setCurrency(symbol as CurrencySymbol)}
+                activeOpacity={0.75}
+                style={[
+                  styles.themeBtn,
+                  {
+                    backgroundColor: active ? colors.primary : `${colors.primary}18`,
+                    borderColor: active ? colors.primary : `${colors.primary}33`,
+                  },
+                ]}
+              >
+                <Text style={[styles.currencySymbol, { color: active ? '#fff' : colors.textSecondary }]}>
+                  {symbol}
+                </Text>
+                <Text style={[styles.themeBtnText, { color: active ? '#fff' : colors.textSecondary }]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </GlassCard>
+
       {/* ── Seguridad ─────────────────────────────────────────────────────── */}
       <SectionTitle label="Seguridad" />
       <GlassCard style={styles.actionCard}>
@@ -266,6 +297,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   themeBtnText: { fontSize: 14, fontWeight: '600' },
+  currencySymbol: { fontSize: 15, fontWeight: '700' },
   // ── Security ──
   actionCard: { padding: 0 },
   actionRow: {
