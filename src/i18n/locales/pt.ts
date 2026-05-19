@@ -159,4 +159,17 @@ export default {
   data_replace: 'Substituir',
   data_period_week: 'Semana',
   data_no_day_selected: 'Não selecionado',
+
+  kpi_cat_profit: 'Lucro',
+  kpi_cat_cogs: 'Custo das vendas',
+  kpi_cat_other: 'Outros',
+  kpi_cat_expenses: 'Despesas',
+  kpi_headline_strong: 'Margem sólida e desempenho acima do objetivo.',
+  kpi_headline_strong_sub: 'Lucro líquido de {{margin}} %. Ticket médio {{ticket}}.',
+  kpi_headline_stable: 'Operação estável com margem ajustada.',
+  kpi_headline_stable_sub: 'Lucro líquido de {{margin}} %. Reveja a estrutura de custos.',
+  kpi_headline_negative: 'Período com resultado negativo.',
+  kpi_headline_negative_sub: 'Perda de {{loss}}. Analise o detalhe das despesas.',
+  kpi_empty_headline: 'Nenhum dado registado ainda.',
+  kpi_empty_subtitle: 'Vá ao separador Dados e adicione o seu primeiro período para ver os KPIs aqui.',
 } as const;

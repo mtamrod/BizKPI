@@ -26,10 +26,10 @@ const METRIC_ICONS: Record<MetricIcon, React.ComponentProps<typeof Ionicons>['na
 
 export default function DashboardScreen() {
   const { session } = useAuth();
-  const { colors, currency } = useTheme();
+  const { colors, currency, language } = useTheme();
   const { t } = useTranslation();
   const companyId = session?.activeCompanyId ?? 'co_001';
-  const { data, status, refresh } = useKPIs(companyId, currency);
+  const { data, status, refresh } = useKPIs(companyId, currency, language);
 
   // Must be before any early returns — Rules of Hooks.
   useFocusEffect(

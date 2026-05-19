@@ -159,4 +159,17 @@ export default {
   data_replace: 'Reemplazar',
   data_period_week: 'Semana',
   data_no_day_selected: 'Sin seleccionar',
+
+  kpi_cat_profit: 'Beneficio',
+  kpi_cat_cogs: 'Coste ventas',
+  kpi_cat_other: 'Otros',
+  kpi_cat_expenses: 'Gastos',
+  kpi_headline_strong: 'Margen sólido y rendimiento sobre objetivo.',
+  kpi_headline_strong_sub: 'Beneficio neto del {{margin}} %. Ticket medio {{ticket}}.',
+  kpi_headline_stable: 'Operación estable con margen ajustado.',
+  kpi_headline_stable_sub: 'Beneficio neto del {{margin}} %. Revisa la estructura de costes.',
+  kpi_headline_negative: 'Período con resultado negativo.',
+  kpi_headline_negative_sub: 'Pérdida de {{loss}}. Analiza el detalle de gastos.',
+  kpi_empty_headline: 'Aún no hay datos registrados.',
+  kpi_empty_subtitle: 'Ve a la pestaña Datos y añade tu primer período para ver los KPIs aquí.',
 } as const;

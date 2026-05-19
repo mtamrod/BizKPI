@@ -22,7 +22,7 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export function useKPIs(companyId: string, currency = '€') {
+export function useKPIs(companyId: string, currency = '€', language = 'es') {
   const [state, dispatch] = useReducer(reducer, {
     data: null,
     status: 'idle',
@@ -35,9 +35,11 @@ export function useKPIs(companyId: string, currency = '€') {
       const data = await kpiService.getDashboard(companyId, currency);
       dispatch({ type: 'FETCH_SUCCESS', data });
     } catch {
-      dispatch({ type: 'FETCH_ERROR', error: 'No se pudieron cargar los KPIs.' });
+      dispatch({ type: 'FETCH_ERROR', error: 'Error' });
     }
-  }, [companyId, currency]);
+  // language in deps so strings re-build when locale changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId, currency, language]);
 
   useEffect(() => { load(); }, [load]);
 

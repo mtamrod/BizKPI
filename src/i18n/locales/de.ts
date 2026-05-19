@@ -159,4 +159,17 @@ export default {
   data_replace: 'Ersetzen',
   data_period_week: 'Woche',
   data_no_day_selected: 'Nicht ausgewählt',
+
+  kpi_cat_profit: 'Gewinn',
+  kpi_cat_cogs: 'Warenkosten',
+  kpi_cat_other: 'Sonstiges',
+  kpi_cat_expenses: 'Ausgaben',
+  kpi_headline_strong: 'Solide Marge und Leistung über dem Ziel.',
+  kpi_headline_strong_sub: 'Nettogewinn {{margin}} %. Ø Bestellwert {{ticket}}.',
+  kpi_headline_stable: 'Stabiler Betrieb mit knapper Marge.',
+  kpi_headline_stable_sub: 'Nettogewinn {{margin}} %. Kostenstruktur überprüfen.',
+  kpi_headline_negative: 'Periode mit negativem Ergebnis.',
+  kpi_headline_negative_sub: 'Verlust von {{loss}}. Kostendetails analysieren.',
+  kpi_empty_headline: 'Noch keine Daten erfasst.',
+  kpi_empty_subtitle: 'Gehe zum Tab Daten und füge deine erste Periode hinzu, um hier KPIs zu sehen.',
 } as const;

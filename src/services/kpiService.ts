@@ -1,7 +1,10 @@
 import { apiClient } from '@/lib/apiClient';
 import { isoWeekNumber } from '@/utils/periodHelpers';
+import i18n from '@/i18n';
 import type { CategorySegment, ChartPoint, DashboardData, KpiMetric } from '@/types';
 import type { PeriodRead } from './periodService';
+
+const t = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts);
 
 // ─── Backend types ────────────────────────────────────────────────────────────
 
@@ -101,41 +104,41 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined, currency: stri
   return [
     {
       id: 'revenue',
-      label: 'Ingresos',
+      label: t('metric_revenue'),
       value: n(latest.revenue),
       formattedValue: formatCurrency(latest.revenue, currency),
       delta: Math.abs(revDelta),
-      deltaLabel: 'vs. período anterior',
+      deltaLabel: t('metric_delta_prev'),
       trend: revDelta >= 0 ? 'up' : 'down',
       icon: 'cash',
     },
     {
       id: 'customers',
-      label: 'Clientes',
+      label: t('metric_customers'),
       value: n(latest.num_customers),
-      formattedValue: n(latest.num_customers).toLocaleString('es-ES'),
+      formattedValue: n(latest.num_customers).toLocaleString(),
       delta: Math.abs(custDelta),
-      deltaLabel: 'clientes atendidos',
+      deltaLabel: t('metric_delta_customers'),
       trend: custDelta >= 0 ? 'up' : 'down',
       icon: 'people',
     },
     {
       id: 'margin',
-      label: 'Margen neto',
+      label: t('metric_margin'),
       value: n(latest.profit_margin),
       formattedValue: formatPct(latest.profit_margin),
       delta: Math.abs(marginDelta),
-      deltaLabel: 'puntos vs. anterior',
+      deltaLabel: t('metric_delta_margin'),
       trend: marginDelta >= 0 ? 'up' : 'down',
       icon: 'pulse',
     },
     {
       id: 'sales',
-      label: 'Ventas',
+      label: t('metric_sales'),
       value: n(latest.num_sales),
-      formattedValue: n(latest.num_sales).toLocaleString('es-ES'),
+      formattedValue: n(latest.num_sales).toLocaleString(),
       delta: Math.abs(salesDelta),
-      deltaLabel: 'operaciones',
+      deltaLabel: t('metric_delta_sales'),
       trend: salesDelta >= 0 ? 'up' : 'down',
       icon: 'cart',
     },
@@ -152,10 +155,10 @@ function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | un
     const otherExpenses = Math.max(0, latest.expenses - cogs - marketing);
     const total = netProfit + cogs + marketing + otherExpenses || 1;
     return [
-      { id: 'profit',    label: 'Beneficio',  value: Math.round((netProfit / total) * 100), color: '#10B981' },
-      { id: 'cogs',      label: 'Coste ventas', value: Math.round((cogs / total) * 100),    color: '#7C3AED' },
-      { id: 'marketing', label: 'Marketing',  value: Math.round((marketing / total) * 100), color: '#F59E0B' },
-      { id: 'other',     label: 'Otros',      value: Math.round((otherExpenses / total) * 100), color: '#3B82F6' },
+      { id: 'profit',    label: t('kpi_cat_profit'),   value: Math.round((netProfit / total) * 100), color: '#10B981' },
+      { id: 'cogs',      label: t('kpi_cat_cogs'),     value: Math.round((cogs / total) * 100),      color: '#7C3AED' },
+      { id: 'marketing', label: 'Marketing',           value: Math.round((marketing / total) * 100), color: '#F59E0B' },
+      { id: 'other',     label: t('kpi_cat_other'),    value: Math.round((otherExpenses / total) * 100), color: '#3B82F6' },
     ].filter((s) => s.value > 0);
   }
 
@@ -163,8 +166,8 @@ function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | un
   const expensePct = Math.round((latest.expenses / revenue) * 100);
   const profitPct = 100 - expensePct;
   return [
-    { id: 'profit',   label: 'Beneficio', value: Math.max(0, profitPct), color: '#10B981' },
-    { id: 'expenses', label: 'Gastos',    value: Math.max(0, expensePct), color: '#7C3AED' },
+    { id: 'profit',   label: t('kpi_cat_profit'),   value: Math.max(0, profitPct),  color: '#10B981' },
+    { id: 'expenses', label: t('kpi_cat_expenses'), value: Math.max(0, expensePct), color: '#7C3AED' },
   ];
 }
 
@@ -172,48 +175,52 @@ function buildHeadline(latest: KpiRead, currency: string): { headline: string; s
   const margin = n(latest.profit_margin);
   if (margin >= 20) {
     return {
-      headline: 'Margen sólido y rendimiento sobre objetivo.',
-      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Ticket medio ${formatCurrency(latest.avg_ticket, currency)}.`,
+      headline: t('kpi_headline_strong'),
+      subtitle: t('kpi_headline_strong_sub', { margin: margin.toFixed(1), ticket: formatCurrency(latest.avg_ticket, currency) }),
     };
   }
   if (margin >= 0) {
     return {
-      headline: 'Operación estable con margen ajustado.',
-      subtitle: `Beneficio neto del ${margin.toFixed(1)} %. Revisa la estructura de costes.`,
+      headline: t('kpi_headline_stable'),
+      subtitle: t('kpi_headline_stable_sub', { margin: margin.toFixed(1) }),
     };
   }
   return {
-    headline: 'Período con resultado negativo.',
-    subtitle: `Pérdida de ${formatCurrency(Math.abs(n(latest.net_profit)), currency)}. Analiza el detalle de gastos.`,
+    headline: t('kpi_headline_negative'),
+    subtitle: t('kpi_headline_negative_sub', { loss: formatCurrency(Math.abs(n(latest.net_profit)), currency) }),
   };
 }
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-const EMPTY_METRIC = (id: string, label: string, icon: KpiMetric['icon']): KpiMetric => ({
-  id,
-  label,
-  value: 0,
-  formattedValue: '—',
-  delta: 0,
-  deltaLabel: 'sin datos aún',
-  trend: 'up',
-  icon,
-});
+function emptyMetric(id: string, labelKey: string, icon: KpiMetric['icon']): KpiMetric {
+  return {
+    id,
+    label: t(labelKey),
+    value: 0,
+    formattedValue: '—',
+    delta: 0,
+    deltaLabel: t('metric_no_data'),
+    trend: 'up',
+    icon,
+  };
+}
 
-const EMPTY_DASHBOARD: DashboardData = {
-  headline: 'Aún no hay datos registrados.',
-  subtitle: 'Ve a la pestaña Datos y añade tu primer período para ver los KPIs aquí.',
-  metrics: [
-    EMPTY_METRIC('revenue', 'Ingresos', 'cash'),
-    EMPTY_METRIC('customers', 'Clientes', 'people'),
-    EMPTY_METRIC('margin', 'Margen neto', 'pulse'),
-    EMPTY_METRIC('sales', 'Ventas', 'cart'),
-  ],
-  revenueSeries: [],
-  weeklySeries: [],
-  categorySeries: [],
-};
+function getEmptyDashboard(): DashboardData {
+  return {
+    headline: t('kpi_empty_headline'),
+    subtitle: t('kpi_empty_subtitle'),
+    metrics: [
+      emptyMetric('revenue',   'metric_revenue',   'cash'),
+      emptyMetric('customers', 'metric_customers', 'people'),
+      emptyMetric('margin',    'metric_margin',    'pulse'),
+      emptyMetric('sales',     'metric_sales',     'cart'),
+    ],
+    revenueSeries: [],
+    weeklySeries: [],
+    categorySeries: [],
+  };
+}
 
 // ─── Service ──────────────────────────────────────────────────────────────────
 
@@ -228,7 +235,7 @@ export const kpiService = {
 
     // business_data is the source of truth: if there are no entries the user
     // has created, show the empty state regardless of stale KPI records.
-    if (!bDataList.length) return EMPTY_DASHBOARD;
+    if (!bDataList.length) return getEmptyDashboard();
 
     // Only keep KPIs whose period still has business_data (guards against
     // stale KPI records left after deleting business_data entries).
@@ -244,7 +251,7 @@ export const kpiService = {
     });
 
     // If all KPIs are stale (no matching business_data) show empty state
-    if (!uniqueKpis.length) return EMPTY_DASHBOARD;
+    if (!uniqueKpis.length) return getEmptyDashboard();
 
     // Build period lookup map
     const periodMap = new Map(periods.map((p) => [p.id, p]));

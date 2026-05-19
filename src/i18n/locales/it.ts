@@ -159,4 +159,17 @@ export default {
   data_replace: 'Sostituisci',
   data_period_week: 'Settimana',
   data_no_day_selected: 'Non selezionato',
+
+  kpi_cat_profit: 'Profitto',
+  kpi_cat_cogs: 'Costo del venduto',
+  kpi_cat_other: 'Altro',
+  kpi_cat_expenses: 'Spese',
+  kpi_headline_strong: 'Margine solido e performance sopra gli obiettivi.',
+  kpi_headline_strong_sub: 'Profitto netto del {{margin}} %. Scontrino medio {{ticket}}.',
+  kpi_headline_stable: 'Operazione stabile con margine ridotto.',
+  kpi_headline_stable_sub: 'Profitto netto del {{margin}} %. Rivedi la struttura dei costi.',
+  kpi_headline_negative: 'Periodo con risultato negativo.',
+  kpi_headline_negative_sub: 'Perdita di {{loss}}. Analizza il dettaglio delle spese.',
+  kpi_empty_headline: 'Nessun dato registrato ancora.',
+  kpi_empty_subtitle: 'Vai alla scheda Dati e aggiungi il primo periodo per vedere i KPI qui.',
 } as const;

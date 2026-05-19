@@ -159,4 +159,17 @@ export default {
   data_replace: 'Replace',
   data_period_week: 'Week',
   data_no_day_selected: 'Not selected',
+
+  kpi_cat_profit: 'Profit',
+  kpi_cat_cogs: 'Cost of goods',
+  kpi_cat_other: 'Other',
+  kpi_cat_expenses: 'Expenses',
+  kpi_headline_strong: 'Strong margin and above-target performance.',
+  kpi_headline_strong_sub: 'Net profit {{margin}} %. Avg. ticket {{ticket}}.',
+  kpi_headline_stable: 'Stable operation with tight margin.',
+  kpi_headline_stable_sub: 'Net profit {{margin}} %. Review your cost structure.',
+  kpi_headline_negative: 'Period ended with a loss.',
+  kpi_headline_negative_sub: 'Loss of {{loss}}. Analyse your expense breakdown.',
+  kpi_empty_headline: 'No data recorded yet.',
+  kpi_empty_subtitle: 'Go to the Data tab and add your first period to see KPIs here.',
 } as const;
