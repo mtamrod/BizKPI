@@ -27,7 +27,8 @@ type Action =
   | { type: 'LOAD_ERROR'; error: string }
   | { type: 'GENERATE_START'; periodId: string }
   | { type: 'GENERATE_SUCCESS'; periodId: string; recommendation: Recommendation }
-  | { type: 'GENERATE_ERROR'; periodId: string };
+  | { type: 'GENERATE_ERROR'; periodId: string }
+  | { type: 'REMOVE_SUCCESS'; periodId: string };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -58,6 +59,11 @@ function reducer(state: State, action: Action): State {
         ...state,
         generatingIds: state.generatingIds.filter((id) => id !== action.periodId),
       };
+    case 'REMOVE_SUCCESS': {
+      const next = { ...state.recommendations };
+      delete next[action.periodId];
+      return { ...state, recommendations: next };
+    }
     default:
       return state;
   }
@@ -113,5 +119,10 @@ export function useRecommendations() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  return { ...state, generate, refresh: load };
+  const remove = useCallback(async (periodId: string) => {
+    await recommendationService.delete(periodId);
+    dispatch({ type: 'REMOVE_SUCCESS', periodId });
+  }, []);
+
+  return { ...state, generate, remove, refresh: load };
 }

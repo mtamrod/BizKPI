@@ -114,10 +114,12 @@ function RecoContent({
   reco,
   isRegenerating,
   onRegenerate,
+  onDelete,
 }: {
   reco: Recommendation;
   isRegenerating: boolean;
   onRegenerate: () => void;
+  onDelete: () => void;
 }) {
   const { colors, language } = useTheme();
   const { t } = useTranslation();
@@ -171,13 +173,21 @@ function RecoContent({
         </GlassCard>
       ) : null}
 
-      {/* Regenerate */}
+      {/* Regenerate + Delete */}
       <Button
         label={isRegenerating ? t('reco_regenerating') : t('reco_regenerate')}
         variant="secondary"
         onPress={onRegenerate}
         loading={isRegenerating}
       />
+      <TouchableOpacity
+        onPress={onDelete}
+        activeOpacity={0.7}
+        style={styles.deleteBtn}
+      >
+        <Ionicons name="trash-outline" size={15} color={colors.error} />
+        <Text style={[styles.deleteBtnText, { color: colors.error }]}>{t('reco_delete')}</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -187,7 +197,7 @@ function RecoContent({
 export default function RecommendationsScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
-  const { periods, recommendations, generatingIds, loadStatus, refresh, generate } = useRecommendations();
+  const { periods, recommendations, generatingIds, loadStatus, refresh, generate, remove } = useRecommendations();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -206,6 +216,22 @@ export default function RecommendationsScreen() {
     } catch {
       Alert.alert('Error', t('reco_error'));
     }
+  }
+
+  function handleDelete() {
+    if (!selectedId) return;
+    Alert.alert(
+      t('reco_delete_title'),
+      t('reco_delete_msg'),
+      [
+        { text: t('login_recover_cancel'), style: 'cancel' },
+        {
+          text: t('reco_delete_confirm'),
+          style: 'destructive',
+          onPress: () => remove(selectedId),
+        },
+      ],
+    );
   }
 
   // ── Loading state ──
@@ -303,6 +329,7 @@ export default function RecommendationsScreen() {
           reco={selectedReco}
           isRegenerating={isGenerating}
           onRegenerate={handleGenerate}
+          onDelete={handleDelete}
         />
       )}
 
@@ -391,6 +418,16 @@ const styles = StyleSheet.create({
   priorityText: { fontSize: 10, fontWeight: '700' },
   actionText: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
   rationaleText: { fontSize: 13, lineHeight: 19 },
+
+  // ── Delete ──
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+  },
+  deleteBtnText: { fontSize: 13, fontWeight: '600' },
 
   // ── Forecast ──
   forecastCard: { padding: 18, gap: 10 },
