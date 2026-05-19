@@ -49,8 +49,8 @@ export const recommendationService = {
   },
 
   /** Generates (or regenerates) recommendations for a period via the AI. */
-  async generate(periodId: string): Promise<Recommendation> {
-    return apiClient.post<Recommendation>(`/recommendations/${periodId}/generate`);
+  async generate(periodId: string, language = 'es'): Promise<Recommendation> {
+    return apiClient.post<Recommendation>(`/recommendations/${periodId}/generate?language=${language}`);
   },
 
   /** Deletes the stored recommendation for a period (silent — ignores 404). */

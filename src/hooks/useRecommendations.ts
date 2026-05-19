@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer } from 'react';
 import { apiClient } from '@/lib/apiClient';
+import { useTheme } from '@/theme/ThemeContext';
 import { periodService, type PeriodRead } from '@/services/periodService';
 import {
   recommendationService,
@@ -65,6 +66,7 @@ function reducer(state: State, action: Action): State {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useRecommendations() {
+  const { language } = useTheme();
   const [state, dispatch] = useReducer(reducer, {
     periods: [],
     recommendations: {},
@@ -102,13 +104,14 @@ export function useRecommendations() {
   const generate = useCallback(async (periodId: string) => {
     dispatch({ type: 'GENERATE_START', periodId });
     try {
-      const recommendation = await recommendationService.generate(periodId);
+      const recommendation = await recommendationService.generate(periodId, language);
       dispatch({ type: 'GENERATE_SUCCESS', periodId, recommendation });
     } catch (err: any) {
       dispatch({ type: 'GENERATE_ERROR', periodId });
       throw err;
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   return { ...state, generate, refresh: load };
 }
