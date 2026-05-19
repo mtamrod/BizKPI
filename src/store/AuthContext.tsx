@@ -10,6 +10,7 @@ import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 import { userService } from '@/services/userService';
 import type { AuthStatus, LoginInput, UserSession } from '@/types';
+import type { RegisterInput } from '@/services/authService';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   error: string | null;
   login: (input: LoginInput) => Promise<void>;
+  /** Returns true if the account needs e-mail confirmation before it is active. */
+  register: (input: RegisterInput) => Promise<boolean>;
   logout: () => Promise<void>;
   /** Updates the business name in the session (call after saving in profile). */
   updateUserName: (name: string) => void;
@@ -140,6 +143,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const register = useCallback(async (input: RegisterInput): Promise<boolean> => {
+    dispatch({ type: 'LOGIN_START' });
+    const result = await authService.register(input);
+    if (result.needsEmailConfirmation) {
+      dispatch({ type: 'RESTORE', session: null }); // reset to idle — user must confirm email
+      return true;
+    }
+    if (result.success && result.session) {
+      await authService.persistSession(result.session);
+      dispatch({ type: 'LOGIN_SUCCESS', session: result.session });
+      return false;
+    }
+    dispatch({ type: 'LOGIN_ERROR', error: result.error ?? 'Error al crear la cuenta.' });
+    return false;
+  }, []);
+
   const logout = useCallback(async () => {
     await authService.clearSession();
     dispatch({ type: 'LOGOUT' });
@@ -154,10 +173,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ...state,
       isAuthenticated: Boolean(state.session),
       login,
+      register,
       logout,
       updateUserName,
     }),
-    [state, login, logout, updateUserName],
+    [state, login, register, logout, updateUserName],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

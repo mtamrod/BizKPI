@@ -2,6 +2,20 @@ import { supabase } from '@/lib/supabaseClient';
 import { userService } from '@/services/userService';
 import type { LoginInput, UserSession } from '@/types';
 
+export interface RegisterInput {
+  email: string;
+  password: string;
+  businessName: string;
+}
+
+export interface RegisterResult {
+  success: boolean;
+  session?: UserSession;
+  error?: string;
+  /** true when Supabase requires e-mail confirmation before the account is active */
+  needsEmailConfirmation?: boolean;
+}
+
 export interface LoginResult {
   success: boolean;
   session?: UserSession;
@@ -91,6 +105,35 @@ export const authService = {
    */
   async persistSession(_session: UserSession): Promise<void> {
     // Intentionally empty — Supabase SDK handles persistence.
+  },
+
+  async register(input: RegisterInput): Promise<RegisterResult> {
+    const { data, error } = await supabase.auth.signUp({
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+      options: {
+        // The DB trigger reads this to set the initial business_name in user_profiles
+        data: { business_name: input.businessName.trim() || 'Mi negocio' },
+      },
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    // Supabase returns no session when e-mail confirmation is required
+    if (!data.session) {
+      return { success: true, needsEmailConfirmation: true };
+    }
+
+    const session = await buildSession(
+      data.session.access_token,
+      data.user!.id,
+      data.user!.email ?? input.email,
+      true,
+    );
+
+    return { success: true, session };
   },
 
   async clearSession(): Promise<void> {
