@@ -9,6 +9,7 @@ import React, {
 import { storage, STORAGE_KEYS } from '@/utils/storage';
 import { darkColors, lightColors } from './colors';
 import type { ThemeColors, ThemeMode } from '@/types';
+import i18n, { LANGUAGES, type LanguageCode } from '@/i18n';
 
 export const CURRENCIES = [
   { symbol: '€', label: 'Euro' },
@@ -18,6 +19,7 @@ export const CURRENCIES = [
 ] as const;
 
 export type CurrencySymbol = typeof CURRENCIES[number]['symbol'];
+export { LANGUAGES, type LanguageCode };
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -27,13 +29,16 @@ interface ThemeContextValue {
   setTheme: (mode: ThemeMode) => void;
   currency: CurrencySymbol;
   setCurrency: (symbol: CurrencySymbol) => void;
+  language: LanguageCode;
+  setLanguage: (code: LanguageCode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>('dark');
+  const [mode, setMode]           = useState<ThemeMode>('dark');
   const [currency, setCurrencyState] = useState<CurrencySymbol>('€');
+  const [language, setLanguageState] = useState<LanguageCode>('es');
 
   useEffect(() => {
     storage.get<ThemeMode>(STORAGE_KEYS.THEME_PREFERENCE).then((saved) => {
@@ -41,6 +46,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
     storage.get<CurrencySymbol>(STORAGE_KEYS.CURRENCY).then((saved) => {
       if (saved && CURRENCIES.some((c) => c.symbol === saved)) setCurrencyState(saved);
+    });
+    storage.get<LanguageCode>(STORAGE_KEYS.LANGUAGE).then((saved) => {
+      if (saved && LANGUAGES.some((l) => l.code === saved)) {
+        setLanguageState(saved);
+        i18n.changeLanguage(saved);
+      }
     });
   }, []);
 
@@ -58,6 +69,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     storage.set(STORAGE_KEYS.CURRENCY, symbol);
   }, []);
 
+  const setLanguage = useCallback((code: LanguageCode) => {
+    setLanguageState(code);
+    i18n.changeLanguage(code);
+    storage.set(STORAGE_KEYS.LANGUAGE, code);
+  }, []);
+
   const value = useMemo<ThemeContextValue>(
     () => ({
       mode,
@@ -67,8 +84,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme,
       currency,
       setCurrency,
+      language,
+      setLanguage,
     }),
-    [mode, toggleTheme, setTheme, currency, setCurrency],
+    [mode, toggleTheme, setTheme, currency, setCurrency, language, setLanguage],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

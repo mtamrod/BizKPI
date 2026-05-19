@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button } from '@/components/ui/Button';
@@ -13,10 +14,11 @@ type Mode = 'login' | 'register';
 export default function LoginScreen() {
   const { login, register, status, error } = useAuth();
   const { colors } = useTheme();
+  const { t } = useTranslation();
 
   const [mode, setMode]               = useState<Mode>('login');
-  const [email, setEmail]             = useState('');
-  const [password, setPassword]       = useState('');
+  const [email, setEmail]             = useState('demo@bizkpi.com');
+  const [password, setPassword]       = useState('BizKPI2024');
   const [businessName, setBusinessName] = useState('');
   const [rememberMe, setRememberMe]   = useState(true);
   const [localError, setLocalError]   = useState('');
@@ -31,10 +33,10 @@ export default function LoginScreen() {
 
   function validate(): boolean {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-    if (!emailOk) { setLocalError('Introduce un correo válido.'); return false; }
-    if (password.length < 6) { setLocalError('La contraseña debe tener al menos 6 caracteres.'); return false; }
+    if (!emailOk) { setLocalError(t('login_error_email')); return false; }
+    if (password.length < 6) { setLocalError(t('login_error_password')); return false; }
     if (mode === 'register' && !businessName.trim()) {
-      setLocalError('Introduce el nombre de tu negocio.'); return false;
+      setLocalError(t('login_error_business')); return false;
     }
     return true;
   }
@@ -48,7 +50,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Register
     const needsConfirmation = await register({
       email: email.trim().toLowerCase(),
       password,
@@ -57,9 +58,9 @@ export default function LoginScreen() {
 
     if (needsConfirmation) {
       Alert.alert(
-        'Revisa tu correo',
-        'Te hemos enviado un enlace de confirmación. Confirma tu cuenta y luego inicia sesión.',
-        [{ text: 'Entendido', onPress: () => switchMode('login') }],
+        t('login_confirm_title'),
+        t('login_confirm_msg'),
+        [{ text: t('login_understood'), onPress: () => switchMode('login') }],
       );
     }
   }
@@ -69,66 +70,60 @@ export default function LoginScreen() {
 
   return (
     <ScreenWrapper scrollable keyboardAware contentStyle={styles.content}>
-      {/* Logo */}
       <View style={styles.logoArea}>
         <View style={[styles.logoBox, { backgroundColor: `${colors.primary}22` }]}>
           <Ionicons name="trending-up" size={34} color={colors.primaryLight} />
         </View>
         <Text style={[styles.appName, { color: colors.primaryLight }]}>BizKPI</Text>
         <Text style={[styles.appSub, { color: colors.textSecondary }]}>
-          Business Intelligence Platform
+          {t('app_subtitle')}
         </Text>
       </View>
 
       <GlassCard style={styles.card}>
         <Text style={[styles.welcome, { color: colors.textPrimary }]}>
-          {mode === 'login' ? 'Bienvenido' : 'Crear cuenta'}
+          {mode === 'login' ? t('login_welcome') : t('login_register_title')}
         </Text>
         <Text style={[styles.desc, { color: colors.textSecondary }]}>
-          {mode === 'login'
-            ? 'Accede a tu panel de KPIs y rendimiento operativo.'
-            : 'Regístrate para empezar a registrar los KPIs de tu negocio.'}
+          {mode === 'login' ? t('login_desc') : t('login_register_desc')}
         </Text>
 
         <View style={styles.form}>
           {mode === 'register' && (
             <Input
-              label="Nombre del negocio"
+              label={t('login_business_name_label')}
               value={businessName}
               onChangeText={setBusinessName}
-              placeholder="Ej. Cafetería Aurora"
+              placeholder={t('login_business_name_placeholder')}
               autoCapitalize="words"
               leftIcon="business-outline"
             />
           )}
           <Input
-            label="Correo electrónico"
+            label={t('login_email_label')}
             value={email}
             onChangeText={setEmail}
-            placeholder="tu@empresa.com"
+            placeholder={t('login_email_placeholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             leftIcon="mail-outline"
           />
           <Input
-            label="Contraseña"
+            label={t('login_password_label')}
             value={password}
             onChangeText={setPassword}
-            placeholder={mode === 'register' ? 'Mínimo 6 caracteres' : 'Introduce tu contraseña'}
+            placeholder={mode === 'register' ? t('login_password_register_placeholder') : t('login_password_placeholder')}
             secureTextEntry
             leftIcon="lock-closed-outline"
           />
         </View>
 
-        {/* Remember me — solo en login */}
         {mode === 'login' && (
           <View style={[styles.rememberRow, { borderColor: colors.border, backgroundColor: colors.glass }]}>
             <View style={styles.rememberText}>
-              <Text style={[styles.rememberTitle, { color: colors.textPrimary }]}>Recordar sesión</Text>
-              <Text style={[styles.rememberSub, { color: colors.textSecondary }]}>
-                Persiste tu acceso entre aperturas
-              </Text>
+              <Text style={[styles.rememberTitle, { color: colors.textPrimary }]}>{t('login_remember')}</Text>
+              <Text style={[styles.rememberSub, { color: colors.textSecondary }]}>{t('login_remember_sub')}</Text>
             </View>
             <Switch
               value={rememberMe}
@@ -139,38 +134,32 @@ export default function LoginScreen() {
           </View>
         )}
 
-        {/* Forgot password — solo en login */}
         {mode === 'login' && (
           <View style={styles.forgotRow}>
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>
-              ¿Olvidaste tu contraseña?
-            </Text>
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('login_forgot')}</Text>
             <Text
               style={[styles.link, { color: colors.primaryLight }]}
               onPress={() =>
                 Alert.alert(
-                  'Recuperar contraseña',
-                  'Introduce tu correo en el campo y pulsa "Recuperar". Te enviaremos un enlace.',
+                  t('login_recover_title'),
+                  t('login_recover_msg'),
                   [
-                    { text: 'Cancelar', style: 'cancel' },
+                    { text: t('login_recover_cancel'), style: 'cancel' },
                     {
-                      text: 'Enviar enlace',
+                      text: t('login_recover_send'),
                       onPress: async () => {
-                        if (!email.trim()) {
-                          Alert.alert('Introduce tu correo primero.');
-                          return;
-                        }
+                        if (!email.trim()) { Alert.alert(t('login_no_email')); return; }
                         const { supabase } = await import('@/lib/supabaseClient');
                         const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim());
                         if (err) Alert.alert('Error', err.message);
-                        else Alert.alert('Correo enviado', `Revisa ${email.trim()} para restablecer tu contraseña.`);
+                        else Alert.alert(t('login_recover_sent_title'), t('login_recover_sent_msg', { email: email.trim() }));
                       },
                     },
                   ],
                 )
               }
             >
-              Recuperar
+              {t('login_recover')}
             </Text>
           </View>
         )}
@@ -180,21 +169,20 @@ export default function LoginScreen() {
         ) : null}
 
         <Button
-          label={mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
+          label={mode === 'login' ? t('login_btn_signin') : t('login_btn_register')}
           onPress={handleSubmit}
           loading={isLoading}
         />
 
-        {/* Toggle mode */}
         <View style={styles.toggleRow}>
           <Text style={[styles.hint, { color: colors.textSecondary }]}>
-            {mode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+            {mode === 'login' ? t('login_no_account') : t('login_has_account')}
           </Text>
           <Text
             style={[styles.link, { color: colors.primaryLight }]}
             onPress={() => switchMode(mode === 'login' ? 'register' : 'login')}
           >
-            {mode === 'login' ? 'Crear cuenta' : 'Iniciar sesión'}
+            {mode === 'login' ? t('login_to_register') : t('login_to_signin')}
           </Text>
         </View>
       </GlassCard>
@@ -203,88 +191,25 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: {
-    justifyContent: 'center',
-    paddingVertical: 32,
-    gap: 24,
-  },
-  logoArea: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appName: {
-    fontSize: 36,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  appSub: {
-    fontSize: 14,
-    fontWeight: '400',
-  },
-  card: {
-    padding: 24,
-    gap: 16,
-  },
-  welcome: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  desc: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  form: {
-    gap: 12,
-  },
+  content: { justifyContent: 'center', paddingVertical: 32, gap: 24 },
+  logoArea: { alignItems: 'center', gap: 8 },
+  logoBox: { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  appName: { fontSize: 36, fontWeight: '800', letterSpacing: -1 },
+  appSub: { fontSize: 14, fontWeight: '400' },
+  card: { padding: 24, gap: 16 },
+  welcome: { fontSize: 24, fontWeight: '700' },
+  desc: { fontSize: 14, lineHeight: 20 },
+  form: { gap: 12 },
   rememberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 12,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 12, gap: 12,
   },
-  rememberText: {
-    flex: 1,
-    gap: 2,
-  },
-  rememberTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  rememberSub: {
-    fontSize: 12,
-  },
-  forgotRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-  },
-  hint: {
-    fontSize: 12,
-  },
-  link: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  errorText: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
+  rememberText: { flex: 1, gap: 2 },
+  rememberTitle: { fontSize: 14, fontWeight: '600' },
+  rememberSub: { fontSize: 12 },
+  forgotRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  toggleRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
+  hint: { fontSize: 12 },
+  link: { fontSize: 13, fontWeight: '600' },
+  errorText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
 });

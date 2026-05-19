@@ -14,8 +14,9 @@ import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/store/AuthContext';
-import { useTheme, CURRENCIES, type CurrencySymbol } from '@/theme/ThemeContext';
+import { useTheme, CURRENCIES, LANGUAGES, type CurrencySymbol, type LanguageCode } from '@/theme/ThemeContext';
 import { userService, type UserProfile } from '@/services/userService';
 import { fmt } from '@/utils/formatters';
 import type { ThemeMode } from '@/types';
@@ -29,7 +30,8 @@ function SectionTitle({ label }: { label: string }) {
 
 export default function ProfileScreen() {
   const { session, logout, updateUserName } = useAuth();
-  const { colors, mode, setTheme, currency, setCurrency } = useTheme();
+  const { colors, mode, setTheme, currency, setCurrency, language, setLanguage } = useTheme();
+  const { t } = useTranslation();
 
   const [profile, setProfile]           = useState<UserProfile | null>(null);
   const [editingName, setEditingName]   = useState(false);
@@ -64,7 +66,7 @@ export default function ProfileScreen() {
       setEditingName(false);
       updateUserName(updated.business_name);
     } catch {
-      Alert.alert('Error', 'No se pudo actualizar el nombre. Inténtalo de nuevo.');
+      Alert.alert('Error', t('profile_name_error'));
     } finally {
       setSaving(false);
     }
@@ -76,7 +78,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenWrapper keyboardAware onRefresh={handleRefresh} refreshing={refreshing}>
-      <Header title="Perfil" subtitle="Tu cuenta y preferencias" />
+      <Header title={t('profile_title')} subtitle={t('profile_subtitle')} />
 
       {/* ── User card ─────────────────────────────────────────────────────── */}
       <GlassCard style={styles.userCard}>
@@ -99,21 +101,21 @@ export default function ProfileScreen() {
             {editingName ? (
               <View style={{ gap: 8 }}>
                 <Input
-                  label="Nombre de empresa"
+                  label={t('profile_name_label')}
                   value={newName}
                   onChangeText={setNewName}
-                  placeholder="Nombre de tu empresa"
+                  placeholder={t('profile_name_placeholder')}
                 />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   <Button
-                    label="Guardar"
+                    label={t('profile_save')}
                     onPress={handleSaveName}
                     loading={saving}
                     fullWidth={false}
                     style={{ flex: 1 }}
                   />
                   <Button
-                    label="Cancelar"
+                    label={t('profile_cancel')}
                     variant="secondary"
                     onPress={() => { setEditingName(false); setNewName(profile?.business_name ?? ''); }}
                     fullWidth={false}
@@ -138,7 +140,7 @@ export default function ProfileScreen() {
                 ) : null}
                 <View style={[styles.roleBadge, { backgroundColor: `${colors.primary}22` }]}>
                   <Text style={[styles.roleText, { color: colors.primaryLight }]}>
-                    Administrador
+                    {t('profile_role')}
                   </Text>
                 </View>
               </>
@@ -148,15 +150,15 @@ export default function ProfileScreen() {
       </GlassCard>
 
       {/* ── Apariencia ────────────────────────────────────────────────────── */}
-      <SectionTitle label="Apariencia" />
+      <SectionTitle label={t('profile_section_appearance')} />
       <GlassCard style={styles.themeCard}>
         <View style={styles.themeRow}>
           {(
             [
-              { m: 'dark' as ThemeMode, icon: 'moon-outline', label: 'Oscuro' },
-              { m: 'light' as ThemeMode, icon: 'sunny-outline', label: 'Claro' },
+              { m: 'dark' as ThemeMode, icon: 'moon-outline', labelKey: 'profile_theme_dark' as const },
+              { m: 'light' as ThemeMode, icon: 'sunny-outline', labelKey: 'profile_theme_light' as const },
             ] as const
-          ).map(({ m, icon, label }) => {
+          ).map(({ m, icon, labelKey }) => {
             const active = mode === m;
             return (
               <TouchableOpacity
@@ -182,7 +184,7 @@ export default function ProfileScreen() {
                     { color: active ? '#fff' : colors.textSecondary },
                   ]}
                 >
-                  {label}
+                  {t(labelKey)}
                 </Text>
               </TouchableOpacity>
             );
@@ -191,7 +193,7 @@ export default function ProfileScreen() {
       </GlassCard>
 
       {/* ── Moneda ───────────────────────────────────────────────────────── */}
-      <SectionTitle label="Moneda" />
+      <SectionTitle label={t('profile_section_currency')} />
       <GlassCard style={styles.themeCard}>
         <View style={styles.themeRow}>
           {CURRENCIES.map(({ symbol, label }) => {
@@ -221,8 +223,37 @@ export default function ProfileScreen() {
         </View>
       </GlassCard>
 
+      {/* ── Idioma ───────────────────────────────────────────────────────── */}
+      <SectionTitle label={t('profile_section_language')} />
+      <GlassCard style={styles.themeCard}>
+        <View style={styles.langGrid}>
+          {LANGUAGES.map(({ code, label, flag }) => {
+            const active = language === code;
+            return (
+              <TouchableOpacity
+                key={code}
+                onPress={() => setLanguage(code as LanguageCode)}
+                activeOpacity={0.75}
+                style={[
+                  styles.langBtn,
+                  {
+                    backgroundColor: active ? colors.primary : `${colors.primary}18`,
+                    borderColor: active ? colors.primary : `${colors.primary}33`,
+                  },
+                ]}
+              >
+                <Text style={styles.langFlag}>{flag}</Text>
+                <Text style={[styles.langLabel, { color: active ? '#fff' : colors.textSecondary }]}>
+                  {label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </GlassCard>
+
       {/* ── Seguridad ─────────────────────────────────────────────────────── */}
-      <SectionTitle label="Seguridad" />
+      <SectionTitle label={t('profile_section_security')} />
       <GlassCard style={styles.actionCard}>
         <TouchableOpacity
           style={styles.actionRow}
@@ -233,7 +264,7 @@ export default function ProfileScreen() {
             if (error) {
               Alert.alert('Error', error.message);
             } else {
-              Alert.alert('Correo enviado', `Revisa ${user.email} para restablecer tu contraseña.`);
+              Alert.alert(t('profile_password_sent_title'), t('profile_password_sent_msg', { email: user.email }));
             }
           }}
         >
@@ -241,13 +272,13 @@ export default function ProfileScreen() {
             <Ionicons name="key-outline" size={18} color={colors.primaryLight} />
           </View>
           <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>
-            Cambiar contraseña
+            {t('profile_change_password')}
           </Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
       </GlassCard>
 
-      <Button label="Cerrar sesión" variant="danger" onPress={logout} />
+      <Button label={t('profile_logout')} variant="danger" onPress={logout} />
 
     </ScreenWrapper>
   );
@@ -298,6 +329,14 @@ const styles = StyleSheet.create({
   },
   themeBtnText: { fontSize: 14, fontWeight: '600' },
   currencySymbol: { fontSize: 15, fontWeight: '700' },
+  langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  langBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    width: '48%', height: 46, borderRadius: 13, borderWidth: 1,
+    paddingHorizontal: 12, justifyContent: 'center',
+  },
+  langFlag: { fontSize: 18 },
+  langLabel: { fontSize: 13, fontWeight: '600' },
   // ── Security ──
   actionCard: { padding: 0 },
   actionRow: {

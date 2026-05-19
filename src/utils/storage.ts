@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   AUTH_SESSION:      '@bizkpi/auth_session',
   THEME_PREFERENCE:  '@bizkpi/theme',
   CURRENCY:          '@bizkpi/currency',
+  LANGUAGE:          '@bizkpi/language',
   DATA_ENTRIES:      '@bizkpi/data_entries',
   ACTIVE_COMPANY:    '@bizkpi/active_company',
 } as const;

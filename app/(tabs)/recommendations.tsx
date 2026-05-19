@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
@@ -84,10 +85,11 @@ function HighlightCard({ item }: { item: RecommendationHighlight }) {
 
 function ActionCard({ item, index }: { item: RecommendationAction; index: number }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const PRIORITY = {
-    high:   { label: 'Alta',   color: '#EF4444', bg: '#EF444415' },
-    medium: { label: 'Media',  color: '#F59E0B', bg: '#F59E0B15' },
-    low:    { label: 'Baja',   color: '#10B981', bg: '#10B98115' },
+    high:   { label: t('reco_priority_high'),   color: '#EF4444', bg: '#EF444415' },
+    medium: { label: t('reco_priority_medium'),  color: '#F59E0B', bg: '#F59E0B15' },
+    low:    { label: t('reco_priority_low'),   color: '#10B981', bg: '#10B98115' },
   };
   const p = PRIORITY[item.priority];
 
@@ -117,9 +119,10 @@ function RecoContent({
   isRegenerating: boolean;
   onRegenerate: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, language } = useTheme();
+  const { t } = useTranslation();
   const content = reco.recommendations;
-  const genDate = new Date(reco.generated_at).toLocaleDateString('es-ES', {
+  const genDate = new Date(reco.generated_at).toLocaleDateString(language, {
     day: '2-digit', month: 'short', year: 'numeric',
   });
 
@@ -129,18 +132,18 @@ function RecoContent({
       <GlassCard style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
           <Ionicons name="bulb" size={18} color={colors.primaryLight} />
-          <Text style={[styles.summaryLabel, { color: colors.primaryLight }]}>Resumen del período</Text>
+          <Text style={[styles.summaryLabel, { color: colors.primaryLight }]}>{t('reco_summary')}</Text>
         </View>
         <Text style={[styles.summaryText, { color: colors.textPrimary }]}>{content.summary}</Text>
         <Text style={[styles.genDate, { color: colors.textSecondary }]}>
-          Generado el {genDate} · {reco.model_used}
+          {t('reco_generated_on', { date: genDate, model: reco.model_used })}
         </Text>
       </GlassCard>
 
       {/* Highlights */}
       {content.highlights.length > 0 && (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Puntos clave</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('reco_highlights')}</Text>
           {content.highlights.map((h, i) => (
             <HighlightCard key={i} item={h} />
           ))}
@@ -150,7 +153,7 @@ function RecoContent({
       {/* Actions */}
       {content.recommendations.length > 0 && (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Acciones recomendadas</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>{t('reco_actions')}</Text>
           {content.recommendations.map((a, i) => (
             <ActionCard key={i} item={a} index={i} />
           ))}
@@ -162,7 +165,7 @@ function RecoContent({
         <GlassCard style={styles.forecastCard}>
           <View style={styles.forecastHeader}>
             <Ionicons name="telescope-outline" size={18} color={colors.accentLight} />
-            <Text style={[styles.forecastLabel, { color: colors.accentLight }]}>Previsión próxima semana</Text>
+            <Text style={[styles.forecastLabel, { color: colors.accentLight }]}>{t('reco_forecast')}</Text>
           </View>
           <Text style={[styles.forecastText, { color: colors.textPrimary }]}>{content.forecast}</Text>
         </GlassCard>
@@ -170,7 +173,7 @@ function RecoContent({
 
       {/* Regenerate */}
       <Button
-        label={isRegenerating ? 'Regenerando…' : 'Regenerar recomendaciones'}
+        label={isRegenerating ? t('reco_regenerating') : t('reco_regenerate')}
         variant="secondary"
         onPress={onRegenerate}
         loading={isRegenerating}
@@ -183,6 +186,7 @@ function RecoContent({
 
 export default function RecommendationsScreen() {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const { periods, recommendations, generatingIds, loadStatus, refresh, generate } = useRecommendations();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -200,7 +204,7 @@ export default function RecommendationsScreen() {
     try {
       await generate(selectedId);
     } catch {
-      Alert.alert('Error', 'No se pudieron generar las recomendaciones. Inténtalo de nuevo.');
+      Alert.alert('Error', t('reco_error'));
     }
   }
 
@@ -209,7 +213,7 @@ export default function RecommendationsScreen() {
     return (
       <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>Cargando semanas…</Text>
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('reco_loading')}</Text>
       </ScreenWrapper>
     );
   }
@@ -219,9 +223,9 @@ export default function RecommendationsScreen() {
     return (
       <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
         <Ionicons name="bar-chart-outline" size={44} color={colors.textSecondary} />
-        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>Sin semanas registradas</Text>
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('reco_no_weeks_title')}</Text>
         <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-          Añade datos en la pestaña Datos para poder generar recomendaciones.
+          {t('reco_no_weeks_msg')}
         </Text>
       </ScreenWrapper>
     );
@@ -229,12 +233,12 @@ export default function RecommendationsScreen() {
 
   return (
     <ScreenWrapper onRefresh={refresh} refreshing={loadStatus === 'loading'}>
-      <Header title="Recomendaciones" subtitle="Análisis semanal con IA" />
+      <Header title={t('reco_title')} subtitle={t('reco_subtitle')} />
 
       {/* ── Period selector ──────────────────────────────────────────────── */}
       <View style={styles.selectorBlock}>
         <Text style={[styles.selectorLabel, { color: colors.textSecondary }]}>
-          Selecciona una semana
+          {t('reco_select_week')}
         </Text>
         <ScrollView
           horizontal
@@ -274,10 +278,10 @@ export default function RecommendationsScreen() {
         <View style={styles.noSelectionWrapper}>
           <Ionicons name="bulb-outline" size={44} color={colors.textSecondary} />
           <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Selecciona una semana
+            {t('reco_no_selection_title')}
           </Text>
           <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-            Elige una semana del selector para ver o generar sus recomendaciones.
+            {t('reco_no_selection_msg')}
           </Text>
         </View>
       )}
@@ -286,10 +290,10 @@ export default function RecommendationsScreen() {
         <GlassCard style={styles.generatingCard}>
           <ActivityIndicator color={colors.primaryLight} />
           <Text style={[styles.generatingText, { color: colors.textPrimary }]}>
-            Analizando los datos de tu negocio…
+            {t('reco_analyzing')}
           </Text>
           <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-            La IA está revisando los KPIs del período. Esto puede tardar unos segundos.
+            {t('reco_analyzing_sub')}
           </Text>
         </GlassCard>
       )}
@@ -306,12 +310,12 @@ export default function RecommendationsScreen() {
         <GlassCard style={styles.generateCard}>
           <Ionicons name="sparkles-outline" size={36} color={colors.primaryLight} />
           <Text style={[styles.generateTitle, { color: colors.textPrimary }]}>
-            Sin recomendaciones aún
+            {t('reco_no_reco_title')}
           </Text>
           <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-            La IA analizará los KPIs de esta semana y generará acciones concretas para tu negocio.
+            {t('reco_no_reco_msg')}
           </Text>
-          <Button label="Generar recomendaciones" onPress={handleGenerate} />
+          <Button label={t('reco_generate')} onPress={handleGenerate} />
         </GlassCard>
       )}
     </ScreenWrapper>

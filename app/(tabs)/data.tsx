@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
@@ -30,12 +31,13 @@ function parseNum(s: string): number {
 
 function SectionLabel({ text, optional }: { text: string; optional?: boolean }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   return (
     <View style={sc.sectionRow}>
       <Text style={[sc.sectionText, { color: colors.textSecondary }]}>{text}</Text>
       {optional && (
         <View style={[sc.optBadge, { backgroundColor: `${colors.accent}20` }]}>
-          <Text style={[sc.optText, { color: colors.accentLight }]}>Opcional</Text>
+          <Text style={[sc.optText, { color: colors.accentLight }]}>{t('data_optional')}</Text>
         </View>
       )}
     </View>
@@ -70,7 +72,8 @@ function StatCell({
 
 export default function DataScreen() {
   const { session } = useAuth();
-  const { colors } = useTheme();
+  const { colors, currency } = useTheme();
+  const { t } = useTranslation();
   const companyId = session?.activeCompanyId ?? 'co_001';
   const { entries, addEntry, replaceEntry, refresh, status } = useDataEntries(companyId);
 
@@ -112,19 +115,19 @@ export default function DataScreen() {
     const next: Record<string, string> = {};
     const rev = parseNum(revenue);
     if (!revenue.trim() || isNaN(rev) || rev < 0) {
-      next.revenue = 'Introduce los ingresos totales';
+      next.revenue = t('data_error_revenue');
     }
     const exp = parseNum(expenses);
     if (!expenses.trim() || isNaN(exp) || exp < 0) {
-      next.expenses = 'Introduce los gastos totales';
+      next.expenses = t('data_error_expenses');
     }
     const sal = parseInt(sales, 10);
     if (!sales.trim() || isNaN(sal) || sal <= 0) {
-      next.sales = 'Introduce el número de ventas';
+      next.sales = t('data_error_sales');
     }
     const cli = parseInt(clients, 10);
     if (!clients.trim() || isNaN(cli) || cli <= 0) {
-      next.clients = 'Introduce el número de clientes';
+      next.clients = t('data_error_clients');
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -174,10 +177,10 @@ export default function DataScreen() {
         await addEntry(input);
       }
       resetForm();
-      setFeedback(existingId ? 'Registro de la semana actualizado.' : 'Entrada guardada correctamente.');
+      setFeedback(existingId ? t('data_updated') : t('data_saved'));
       setTimeout(() => setFeedback(''), 3500);
     } catch {
-      Alert.alert('Error', 'No se pudo guardar la entrada. Inténtalo de nuevo.');
+      Alert.alert('Error', t('data_error_save'));
     }
   }
 
@@ -195,12 +198,12 @@ export default function DataScreen() {
     if (existing) {
       const weekNum = isoWeekNumber(periodStart);
       Alert.alert(
-        'Semana ya registrada',
-        `Ya existe un registro para la S${weekNum} (${formatPeriodRange('week', periodStart, periodEnd)}).\n\nSe sustituirá por los nuevos datos.`,
+        t('data_week_exists_title'),
+        t('data_week_exists_msg', { week: weekNum, range: formatPeriodRange('week', periodStart, periodEnd) }),
         [
-          { text: 'Cancelar', style: 'cancel' },
+          { text: t('login_recover_cancel'), style: 'cancel' },
           {
-            text: 'Reemplazar',
+            text: t('data_replace'),
             style: 'destructive',
             onPress: () => doSave(input, existing.id, existing.periodId),
           },
@@ -216,7 +219,7 @@ export default function DataScreen() {
 
   return (
     <ScreenWrapper keyboardAware onRefresh={refresh} refreshing={status === 'loading'}>
-      <Header title="Entrada de datos" subtitle="Registra métricas de tu negocio" />
+      <Header title={t('data_title')} subtitle={t('data_subtitle')} />
 
       {/* ── Summary card (from last entry) ──────────────────────────────── */}
       <GlassCard style={styles.statsCard}>
@@ -225,28 +228,28 @@ export default function DataScreen() {
             <View style={styles.statsTop}>
               <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                 <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                  Semana · {formatPeriodRange('week', lastEntry.periodDate, lastEntry.periodEndDate)}
+                  {t('data_period_week')} · {formatPeriodRange('week', lastEntry.periodDate, lastEntry.periodEndDate)}
                 </Text>
               </View>
               <Text style={[styles.statsHint, { color: colors.textSecondary }]}>
-                Último registro
+                {t('data_last_entry')}
               </Text>
             </View>
             <View style={styles.statsRow}>
               <StatCell
-                label="Beneficio"
+                label={t('data_profit')}
                 value={fmt.currency(summaryStats.profit)}
                 accent={summaryStats.profit >= 0}
               />
               <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <StatCell
-                label="Margen"
+                label={t('data_margin')}
                 value={`${summaryStats.margin.toFixed(1)}%`}
                 accent={summaryStats.margin >= 0}
               />
               <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
               <StatCell
-                label="Ticket medio"
+                label={t('data_avg_ticket')}
                 value={fmt.currency(summaryStats.ticket)}
               />
             </View>
@@ -256,8 +259,8 @@ export default function DataScreen() {
             <Ionicons name="analytics-outline" size={20} color={colors.textSecondary} />
             <Text style={[styles.noDataText, { color: colors.textSecondary }]}>
               {entries.length === 0
-                ? 'Registra tu primera entrada para ver estadísticas'
-                : 'Cargando resumen…'}
+                ? t('data_first_entry')
+                : t('data_loading_summary')}
             </Text>
           </View>
         )}
@@ -265,12 +268,12 @@ export default function DataScreen() {
 
       {/* ── Required fields ─────────────────────────────────────────────── */}
       <GlassCard style={styles.formCard}>
-        <SectionLabel text="Datos obligatorios" />
+        <SectionLabel text={t('data_required')} />
 
         {/* Date picker */}
         <View style={styles.fieldBlock}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Semana analizada *
+            {t('data_week_label')} *
           </Text>
           <PeriodPicker
             startDate={periodStart}
@@ -288,7 +291,7 @@ export default function DataScreen() {
         <View style={styles.twoCol}>
           <View style={styles.colItem}>
             <Input
-              label="Ingresos totales (€) *"
+              label={`${t('data_revenue_label')} (${currency}) *`}
               value={revenue}
               onChangeText={setRevenue}
               placeholder="0.00"
@@ -298,7 +301,7 @@ export default function DataScreen() {
           </View>
           <View style={styles.colItem}>
             <Input
-              label="Gastos totales (€) *"
+              label={`${t('data_expenses_label')} (${currency}) *`}
               value={expenses}
               onChangeText={setExpenses}
               placeholder="0.00"
@@ -312,7 +315,7 @@ export default function DataScreen() {
         <View style={styles.twoCol}>
           <View style={styles.colItem}>
             <Input
-              label="Nº ventas / pedidos *"
+              label={`${t('data_sales_form_label')} *`}
               value={sales}
               onChangeText={setSales}
               placeholder="0"
@@ -322,7 +325,7 @@ export default function DataScreen() {
           </View>
           <View style={styles.colItem}>
             <Input
-              label="Nº clientes *"
+              label={`${t('data_clients_form_label')} *`}
               value={clients}
               onChangeText={setClients}
               placeholder="0"
@@ -335,18 +338,18 @@ export default function DataScreen() {
 
       {/* ── Optional fields ──────────────────────────────────────────────── */}
       <GlassCard style={styles.formCard}>
-        <SectionLabel text="Análisis adicional" optional />
+        <SectionLabel text={t('data_optional_section')} optional />
 
         <Input
-          label="Producto o servicio más vendido"
+          label={t('data_product_label')}
           value={bestProduct}
           onChangeText={setBestProduct}
-          placeholder="Ej. Plan Enterprise, Tarta de chocolate…"
+          placeholder={t('data_product_placeholder')}
         />
 
         <View style={styles.fieldBlock}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Día con más ventas
+            {t('data_best_day_label')}
           </Text>
           <DayPicker
             weekStart={periodStart}
@@ -358,7 +361,7 @@ export default function DataScreen() {
 
         <View style={styles.fieldBlock}>
           <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
-            Día con menos ventas
+            {t('data_worst_day_label')}
           </Text>
           <DayPicker
             weekStart={periodStart}
@@ -369,10 +372,10 @@ export default function DataScreen() {
         </View>
 
         <Input
-          label="Observaciones del período"
+          label={t('data_obs_label')}
           value={observations}
           onChangeText={setObservations}
-          placeholder="Festivo, obras, promoción activa, falta de stock…"
+          placeholder={t('data_obs_placeholder')}
           multiline
           numberOfLines={4}
           style={styles.multiline}
@@ -388,7 +391,7 @@ export default function DataScreen() {
       ) : null}
 
       <Button
-        label="Guardar entrada"
+        label={t('data_save')}
         onPress={handleSave}
         loading={status === 'loading'}
       />
@@ -397,7 +400,7 @@ export default function DataScreen() {
       {entries.length > 0 && (
         <View style={styles.entriesSection}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Entradas recientes
+            {t('data_recent')}
           </Text>
           {entries.slice(0, 3).map((entry) => {
             const profit = entry.totalRevenue - entry.totalExpenses;
@@ -411,7 +414,7 @@ export default function DataScreen() {
                 <View style={styles.entryHeader}>
                   <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                     <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                      Semana
+                      {t('data_period_week')}
                     </Text>
                   </View>
                   <Text style={[styles.entryDate, { color: colors.textSecondary }]}>
@@ -421,7 +424,7 @@ export default function DataScreen() {
                   {entry.source === 'import' && (
                     <View style={[styles.sourceBadge, { backgroundColor: `${colors.accent}18` }]}>
                       <Text style={[styles.sourceText, { color: colors.accentLight }]}>
-                        Importado
+                        {t('data_imported')}
                       </Text>
                     </View>
                   )}
@@ -431,7 +434,7 @@ export default function DataScreen() {
                 <View style={styles.entryMetrics}>
                   <View style={styles.entryMetricItem}>
                     <Text style={[styles.entryMetricLabel, { color: colors.textSecondary }]}>
-                      Ingresos
+                      {t('data_revenue_label')}
                     </Text>
                     <Text style={[styles.entryMetricValue, { color: colors.textPrimary }]}>
                       {fmt.currency(entry.totalRevenue)}
@@ -439,7 +442,7 @@ export default function DataScreen() {
                   </View>
                   <View style={styles.entryMetricItem}>
                     <Text style={[styles.entryMetricLabel, { color: colors.textSecondary }]}>
-                      Gastos
+                      {t('data_expenses_label')}
                     </Text>
                     <Text style={[styles.entryMetricValue, { color: colors.textPrimary }]}>
                       {fmt.currency(entry.totalExpenses)}
@@ -447,7 +450,7 @@ export default function DataScreen() {
                   </View>
                   <View style={styles.entryMetricItem}>
                     <Text style={[styles.entryMetricLabel, { color: colors.textSecondary }]}>
-                      Beneficio
+                      {t('data_profit')}
                     </Text>
                     <Text
                       style={[
@@ -460,7 +463,7 @@ export default function DataScreen() {
                   </View>
                   <View style={styles.entryMetricItem}>
                     <Text style={[styles.entryMetricLabel, { color: colors.textSecondary }]}>
-                      Margen
+                      {t('data_margin')}
                     </Text>
                     <Text
                       style={[
@@ -478,13 +481,13 @@ export default function DataScreen() {
                   <View style={styles.entrySecItem}>
                     <Ionicons name="cart-outline" size={13} color={colors.textSecondary} />
                     <Text style={[styles.entrySecText, { color: colors.textSecondary }]}>
-                      {entry.totalSales} ventas
+                      {t('data_sales_count', { n: entry.totalSales })}
                     </Text>
                   </View>
                   <View style={styles.entrySecItem}>
                     <Ionicons name="people-outline" size={13} color={colors.textSecondary} />
                     <Text style={[styles.entrySecText, { color: colors.textSecondary }]}>
-                      {entry.totalClients} clientes
+                      {t('data_clients_count', { n: entry.totalClients })}
                     </Text>
                   </View>
                   {entry.bestProduct ? (

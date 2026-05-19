@@ -1,6 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -23,16 +24,10 @@ const METRIC_ICONS: Record<MetricIcon, React.ComponentProps<typeof Ionicons>['na
   cart:   'cart-outline',
 };
 
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 13) return 'Buenos días';
-  if (h < 20) return 'Buenas tardes';
-  return 'Buenas noches';
-}
-
 export default function DashboardScreen() {
   const { session } = useAuth();
   const { colors, currency } = useTheme();
+  const { t } = useTranslation();
   const companyId = session?.activeCompanyId ?? 'co_001';
   const { data, status, refresh } = useKPIs(companyId, currency);
 
@@ -41,21 +36,24 @@ export default function DashboardScreen() {
     useCallback(() => { refresh(); }, [refresh]),
   );
 
+  const h = new Date().getHours();
+  const greetingKey = h < 13 ? 'greeting_morning' : h < 20 ? 'greeting_afternoon' : 'greeting_evening';
+
   if (status === 'error' && !data) {
     return (
       <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
         <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
         <Text style={[styles.loadingText, { color: colors.textPrimary, fontWeight: '600' }]}>
-          No se pudo cargar el panel
+          {t('dashboard_error_title')}
         </Text>
         <Text style={[styles.loadingText, { color: colors.textSecondary, textAlign: 'center' }]}>
-          Comprueba tu conexión o espera unos segundos.
+          {t('dashboard_error_msg')}
         </Text>
         <TouchableOpacity
           onPress={refresh}
           style={[styles.retryBtn, { backgroundColor: colors.primary }]}
         >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Reintentar</Text>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
         </TouchableOpacity>
       </ScreenWrapper>
     );
@@ -66,7 +64,7 @@ export default function DashboardScreen() {
       <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-          Cargando panel…
+          {t('dashboard_loading')}
         </Text>
       </ScreenWrapper>
     );
@@ -80,8 +78,8 @@ export default function DashboardScreen() {
     <ScreenWrapper onRefresh={refresh} refreshing={status === 'loading' && !!data}>
       {/* Header */}
       <Header
-        title={`${greeting()}, ${firstName}`}
-        subtitle={`Semana ${currentWeek} · Panel principal`}
+        title={`${t(greetingKey)}, ${firstName}`}
+        subtitle={t('dashboard_subtitle', { week: currentWeek })}
       />
 
       {/* Empresa + estado */}
@@ -89,7 +87,7 @@ export default function DashboardScreen() {
         <View style={styles.statusRow}>
           <View style={styles.statusLeft}>
             <Text style={[styles.statusLabel, { color: colors.textSecondary }]}>
-              Empresa activa
+              {t('dashboard_active_company')}
             </Text>
             <Text style={[styles.statusName, { color: colors.textPrimary }]}>
               {businessName}
@@ -147,10 +145,10 @@ export default function DashboardScreen() {
         <View style={styles.chartHeader}>
           <View style={styles.chartLabels}>
             <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Ingresos por semana
+              {t('dashboard_revenue_chart')}
             </Text>
             <Text style={[styles.chartSub, { color: colors.textSecondary }]}>
-              Tendencia de las últimas 6 semanas
+              {t('dashboard_revenue_trend')}
             </Text>
           </View>
           <Text style={[styles.chartValue, { color: colors.primaryLight }]}>
@@ -165,10 +163,10 @@ export default function DashboardScreen() {
         <GlassCard style={StyleSheet.flatten([styles.chartCard, styles.chartHalf])}>
           <View style={styles.chartLabels}>
             <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Ventas por semana
+              {t('dashboard_sales_chart')}
             </Text>
             <Text style={[styles.chartSub, { color: colors.textSecondary }]}>
-              Últimas semanas
+              {t('dashboard_last_weeks')}
             </Text>
           </View>
           <BarChart points={data.weeklySeries} />
@@ -177,10 +175,10 @@ export default function DashboardScreen() {
         <GlassCard style={StyleSheet.flatten([styles.chartCard, styles.chartHalf])}>
           <View style={styles.chartLabels}>
             <Text style={[styles.chartTitle, { color: colors.textPrimary }]}>
-              Categorías
+              {t('dashboard_categories')}
             </Text>
             <Text style={[styles.chartSub, { color: colors.textSecondary }]}>
-              Distribución
+              {t('dashboard_distribution')}
             </Text>
           </View>
           <DonutChart segments={data.categorySeries} size={110} />
