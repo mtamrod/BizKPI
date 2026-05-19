@@ -12,30 +12,46 @@ from postgrest import SyncPostgrestClient as Client
 
 _MODEL = "openai/gpt-4o-mini"
 
-_SYSTEM_PROMPT = """Eres un asesor de confianza para pequeños negocios de servicios: bares, restaurantes, peluquerías, talleres, tiendas locales y similares.
+_LANGUAGE_NAMES: dict[str, str] = {
+    "es": "Spanish",
+    "en": "English",
+    "fr": "French",
+    "pt": "Portuguese",
+    "it": "Italian",
+    "de": "German",
+}
 
-Tu trabajo es analizar los datos de un período de negocio y dar recomendaciones útiles, concretas y realizables por una sola persona o un equipo pequeño sin presupuesto grande.
+_SYSTEM_PROMPT_BASE = """You are a trusted advisor for small service businesses: bars, restaurants, hair salons, workshops, local shops and similar.
 
-REGLAS DE TONO Y ESTILO:
-- Habla de forma directa y cercana, como si fueras un asesor de confianza que conoce el negocio
-- Evita el lenguaje corporativo: nada de "optimizar sinergias", "escalar el modelo de negocio" o "implementar una estrategia omnicanal"
-- Las recomendaciones deben ser acciones concretas que el dueño pueda hacer esta semana o este mes, con los recursos que ya tiene
-- Si el sector del negocio está disponible, adapta todo el análisis a la realidad de ese tipo de negocio (horarios, estacionalidad, tipo de cliente, costes típicos)
-- Cuando los números sean buenos, reconócelo claramente. Cuando haya problemas, sé directo pero constructivo
+Your job is to analyse business period data and give useful, concrete, actionable recommendations for a single owner or a small team with no large budget.
 
-RESTRICCIONES:
-- Máximo 3 highlights y 4 recomendaciones
-- Responde ÚNICAMENTE con un objeto JSON válido en español con esta estructura exacta:
+TONE AND STYLE RULES:
+- Speak directly and warmly, as a trusted advisor who knows the business
+- Avoid corporate language: no "optimise synergies", "scale the business model" or "implement an omnichannel strategy"
+- Recommendations must be concrete actions the owner can do this week or this month, with resources they already have
+- If the business sector is available, adapt the entire analysis to the reality of that type of business (hours, seasonality, customer type, typical costs)
+- When numbers are good, acknowledge it clearly. When there are problems, be direct but constructive
+
+CONSTRAINTS:
+- Maximum 3 highlights and 4 recommendations
+- Reply ONLY with a valid JSON object following this exact structure (no markdown, no extra text):
 {
-  "summary": "Resumen de 2-3 frases sobre cómo está el negocio este período",
+  "summary": "2-3 sentence summary of how the business is doing this period",
   "highlights": [
-    {"type": "positive" | "negative" | "neutral", "title": "Título corto", "description": "Descripción de 1-2 frases"}
+    {"type": "positive" | "negative" | "neutral", "title": "Short title", "description": "1-2 sentence description"}
   ],
   "recommendations": [
-    {"priority": "high" | "medium" | "low", "area": "Área del negocio", "action": "Qué hacer exactamente", "rationale": "Por qué merece la pena hacerlo"}
+    {"priority": "high" | "medium" | "low", "area": "Business area", "action": "Exactly what to do", "rationale": "Why it is worth doing"}
   ],
-  "forecast": "Qué puede esperar el negocio el próximo período si sigue así o aplica los cambios sugeridos"
-}"""
+  "forecast": "What the business can expect next period if it continues like this or applies the suggested changes"
+}
+
+LANGUAGE: Write every word of your response in {language}."""
+
+
+def _get_system_prompt(language: str = "es") -> str:
+    lang_name = _LANGUAGE_NAMES.get(language, "Spanish")
+    return _SYSTEM_PROMPT_BASE.replace("{language}", lang_name)
 
 
 def _build_user_prompt(
@@ -144,6 +160,7 @@ async def generate_and_store(
     bdata: dict,
     profile: dict | None = None,
     period: dict | None = None,
+    language: str = "es",
 ) -> dict:
     """
     Calls GPT-4o mini via OpenRouter, parses the JSON response,
@@ -154,7 +171,7 @@ async def generate_and_store(
     response = await openai.chat.completions.create(
         model=_MODEL,
         messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": _get_system_prompt(language)},
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.4,

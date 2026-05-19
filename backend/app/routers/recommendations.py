@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.core.openai_client import get_openai
 from app.core.supabase_client import get_supabase
@@ -49,7 +49,11 @@ def delete_recommendation(period_id: str, user_id: CurrentUser):
 
 
 @router.post("/{period_id}/generate", response_model=RecommendationRead, status_code=status.HTTP_201_CREATED)
-async def generate_recommendation(period_id: str, user_id: CurrentUser):
+async def generate_recommendation(
+    period_id: str,
+    user_id: CurrentUser,
+    language: str = Query(default="es"),
+):
     """
     Generates (or regenerates) AI recommendations for the given period.
     Requires that both business_data and kpis exist for the period.
@@ -117,5 +121,6 @@ async def generate_recommendation(period_id: str, user_id: CurrentUser):
         bdata=bdata_result.data,
         profile=profile,
         period=period,
+        language=language,
     )
     return row
