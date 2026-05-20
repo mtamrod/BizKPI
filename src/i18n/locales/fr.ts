@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Nom de votre entreprise',
   profile_password_sent_title: 'E-mail envoyé',
   profile_password_sent_msg: 'Vérifiez {{email}} pour réinitialiser votre mot de passe.',
+  profile_current_password: 'Mot de passe actuel',
+  profile_new_password: 'Nouveau mot de passe',
+  profile_confirm_password: 'Confirmer le mot de passe',
+  profile_password_changed: 'Mot de passe mis à jour avec succès.',
+  profile_password_wrong: 'Le mot de passe actuel est incorrect.',
+  profile_password_mismatch: 'Les mots de passe ne correspondent pas.',
+  profile_password_short: 'Le nouveau mot de passe doit contenir au moins 6 caractères.',
 
   dashboard_error_msg: 'Vérifiez votre connexion ou attendez quelques secondes.',
   dashboard_loading: 'Chargement du tableau de bord…',

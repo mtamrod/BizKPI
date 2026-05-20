@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Nome della tua azienda',
   profile_password_sent_title: 'E-mail inviata',
   profile_password_sent_msg: 'Controlla {{email}} per reimpostare la password.',
+  profile_current_password: 'Password attuale',
+  profile_new_password: 'Nuova password',
+  profile_confirm_password: 'Conferma password',
+  profile_password_changed: 'Password aggiornata con successo.',
+  profile_password_wrong: 'La password attuale non è corretta.',
+  profile_password_mismatch: 'Le password non corrispondono.',
+  profile_password_short: 'La nuova password deve contenere almeno 6 caratteri.',
 
   dashboard_error_msg: 'Controlla la connessione o attendi qualche secondo.',
   dashboard_loading: 'Caricamento cruscotto…',

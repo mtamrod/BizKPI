@@ -33,11 +33,16 @@ export default function ProfileScreen() {
   const { colors, mode, setTheme, currency, setCurrency, language, setLanguage } = useTheme();
   const { t } = useTranslation();
 
-  const [profile, setProfile]           = useState<UserProfile | null>(null);
-  const [editingName, setEditingName]   = useState(false);
-  const [newName, setNewName]           = useState('');
-  const [saving, setSaving]             = useState(false);
-  const [refreshing, setRefreshing]     = useState(false);
+  const [profile, setProfile]             = useState<UserProfile | null>(null);
+  const [editingName, setEditingName]     = useState(false);
+  const [newName, setNewName]             = useState('');
+  const [saving, setSaving]               = useState(false);
+  const [refreshing, setRefreshing]       = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword]   = useState('');
+  const [newPassword, setNewPassword]           = useState('');
+  const [confirmPassword, setConfirmPassword]   = useState('');
+  const [passwordSaving, setPasswordSaving]     = useState(false);
 
   const loadProfile = useCallback(async () => {
     const p = await userService.getProfile();
@@ -71,6 +76,42 @@ export default function ProfileScreen() {
       setSaving(false);
     }
   }, [newName]);
+
+  const handleChangePassword = useCallback(async () => {
+    if (newPassword.length < 6) {
+      Alert.alert('Error', t('profile_password_short'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', t('profile_password_mismatch'));
+      return;
+    }
+    if (!session?.user?.email) return;
+    setPasswordSaving(true);
+    try {
+      const { supabase } = await import('@/lib/supabaseClient');
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+      if (signInError) {
+        Alert.alert('Error', t('profile_password_wrong'));
+        return;
+      }
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        Alert.alert('Error', updateError.message);
+        return;
+      }
+      setChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      Alert.alert('✓', t('profile_password_changed'));
+    } finally {
+      setPasswordSaving(false);
+    }
+  }, [currentPassword, newPassword, confirmPassword]);
 
   if (!session) return null;
   const { user } = session;
@@ -254,28 +295,67 @@ export default function ProfileScreen() {
 
       {/* ── Seguridad ─────────────────────────────────────────────────────── */}
       <SectionTitle label={t('profile_section_security')} />
-      <GlassCard style={styles.actionCard}>
-        <TouchableOpacity
-          style={styles.actionRow}
-          activeOpacity={0.7}
-          onPress={async () => {
-            if (!user.email) return;
-            const { error } = await (await import('@/lib/supabaseClient')).supabase.auth.resetPasswordForEmail(user.email);
-            if (error) {
-              Alert.alert('Error', error.message);
-            } else {
-              Alert.alert(t('profile_password_sent_title'), t('profile_password_sent_msg', { email: user.email }));
-            }
-          }}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: `${colors.primary}20` }]}>
-            <Ionicons name="key-outline" size={18} color={colors.primaryLight} />
+      <GlassCard style={changingPassword ? styles.actionCardOpen : styles.actionCard}>
+        {changingPassword ? (
+          <View style={{ gap: 12, padding: 16 }}>
+            <Input
+              label={t('profile_current_password')}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
+            <Input
+              label={t('profile_new_password')}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
+            <Input
+              label={t('profile_confirm_password')}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="••••••••"
+              secureTextEntry
+            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label={t('profile_save')}
+                onPress={handleChangePassword}
+                loading={passwordSaving}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label={t('profile_cancel')}
+                variant="secondary"
+                onPress={() => {
+                  setChangingPassword(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
+            </View>
           </View>
-          <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>
-            {t('profile_change_password')}
-          </Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.actionRow}
+            activeOpacity={0.7}
+            onPress={() => setChangingPassword(true)}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: `${colors.primary}20` }]}>
+              <Ionicons name="key-outline" size={18} color={colors.primaryLight} />
+            </View>
+            <Text style={[styles.actionLabel, { color: colors.textPrimary }]}>
+              {t('profile_change_password')}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
       </GlassCard>
 
       <Button label={t('profile_logout')} variant="danger" onPress={logout} />
@@ -339,6 +419,7 @@ const styles = StyleSheet.create({
   langLabel: { fontSize: 13, fontWeight: '600' },
   // ── Security ──
   actionCard: { padding: 0 },
+  actionCardOpen: {},
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',

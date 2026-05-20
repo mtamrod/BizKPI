@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Nome da sua empresa',
   profile_password_sent_title: 'E-mail enviado',
   profile_password_sent_msg: 'Verifique {{email}} para redefinir sua senha.',
+  profile_current_password: 'Senha atual',
+  profile_new_password: 'Nova senha',
+  profile_confirm_password: 'Confirmar senha',
+  profile_password_changed: 'Senha atualizada com sucesso.',
+  profile_password_wrong: 'A senha atual está incorreta.',
+  profile_password_mismatch: 'As senhas não coincidem.',
+  profile_password_short: 'A nova senha deve ter pelo menos 6 caracteres.',
 
   dashboard_error_msg: 'Verifique a sua ligação ou aguarde alguns segundos.',
   dashboard_loading: 'A carregar painel…',

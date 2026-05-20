@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Nombre de tu empresa',
   profile_password_sent_title: 'Correo enviado',
   profile_password_sent_msg: 'Revisa {{email}} para restablecer tu contraseña.',
+  profile_current_password: 'Contraseña actual',
+  profile_new_password: 'Nueva contraseña',
+  profile_confirm_password: 'Confirmar contraseña',
+  profile_password_changed: 'Contraseña actualizada correctamente.',
+  profile_password_wrong: 'La contraseña actual es incorrecta.',
+  profile_password_mismatch: 'Las contraseñas no coinciden.',
+  profile_password_short: 'La nueva contraseña debe tener al menos 6 caracteres.',
 
   dashboard_error_msg: 'Comprueba tu conexión o espera unos segundos.',
   dashboard_loading: 'Cargando panel…',

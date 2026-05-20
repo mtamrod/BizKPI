@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Name Ihres Unternehmens',
   profile_password_sent_title: 'E-Mail gesendet',
   profile_password_sent_msg: 'Prüfen Sie {{email}} zum Zurücksetzen Ihres Passworts.',
+  profile_current_password: 'Aktuelles Passwort',
+  profile_new_password: 'Neues Passwort',
+  profile_confirm_password: 'Passwort bestätigen',
+  profile_password_changed: 'Passwort erfolgreich aktualisiert.',
+  profile_password_wrong: 'Das aktuelle Passwort ist falsch.',
+  profile_password_mismatch: 'Die Passwörter stimmen nicht überein.',
+  profile_password_short: 'Das neue Passwort muss mindestens 6 Zeichen haben.',
 
   dashboard_error_msg: 'Prüfe deine Verbindung oder warte einen Moment.',
   dashboard_loading: 'Dashboard wird geladen…',

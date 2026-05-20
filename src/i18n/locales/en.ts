@@ -132,6 +132,13 @@ export default {
   profile_name_placeholder: 'Your business name',
   profile_password_sent_title: 'Email sent',
   profile_password_sent_msg: 'Check {{email}} to reset your password.',
+  profile_current_password: 'Current password',
+  profile_new_password: 'New password',
+  profile_confirm_password: 'Confirm password',
+  profile_password_changed: 'Password updated successfully.',
+  profile_password_wrong: 'Current password is incorrect.',
+  profile_password_mismatch: 'Passwords do not match.',
+  profile_password_short: 'New password must be at least 6 characters.',
 
   dashboard_error_msg: 'Check your connection or wait a few seconds.',
   dashboard_loading: 'Loading dashboard…',
