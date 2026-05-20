@@ -1,5 +1,9 @@
 export default {
   app_subtitle: 'Business Intelligence Platform',
+  currency_euro: 'Euro',
+  currency_dollar: 'Dollar',
+  currency_pound: 'Pfund',
+  currency_yen: 'Yen',
 
   greeting_morning: 'Guten Morgen',
   greeting_afternoon: 'Guten Tag',

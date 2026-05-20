@@ -237,7 +237,7 @@ export default function ProfileScreen() {
       <SectionTitle label={t('profile_section_currency')} />
       <GlassCard style={styles.themeCard}>
         <View style={styles.themeRow}>
-          {CURRENCIES.map(({ symbol, label }) => {
+          {CURRENCIES.map(({ symbol, labelKey }) => {
             const active = currency === symbol;
             return (
               <TouchableOpacity
@@ -256,7 +256,7 @@ export default function ProfileScreen() {
                   {symbol}
                 </Text>
                 <Text style={[styles.themeBtnText, { color: active ? '#fff' : colors.textSecondary }]}>
-                  {label}
+                  {t(labelKey)}
                 </Text>
               </TouchableOpacity>
             );

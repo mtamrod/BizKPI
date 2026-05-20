@@ -12,10 +12,10 @@ import type { ThemeColors, ThemeMode } from '@/types';
 import i18n, { LANGUAGES, type LanguageCode } from '@/i18n';
 
 export const CURRENCIES = [
-  { symbol: '€', label: 'Euro' },
-  { symbol: '$', label: 'Dólar' },
-  { symbol: '£', label: 'Libra' },
-  { symbol: '¥', label: 'Yen' },
+  { symbol: '€', labelKey: 'currency_euro' },
+  { symbol: '$', labelKey: 'currency_dollar' },
+  { symbol: '£', labelKey: 'currency_pound' },
+  { symbol: '¥', labelKey: 'currency_yen' },
 ] as const;
 
 export type CurrencySymbol = typeof CURRENCIES[number]['symbol'];
