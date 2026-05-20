@@ -268,7 +268,7 @@ export default function ProfileScreen() {
       <SectionTitle label={t('profile_section_language')} />
       <GlassCard style={styles.themeCard}>
         <View style={styles.langGrid}>
-          {LANGUAGES.map(({ code, label, flag }) => {
+          {LANGUAGES.map(({ code, label }) => {
             const active = language === code;
             return (
               <TouchableOpacity
@@ -283,7 +283,14 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                <Text style={styles.langFlag}>{flag}</Text>
+                <View style={[
+                  styles.langCode,
+                  { backgroundColor: active ? 'rgba(255,255,255,0.2)' : `${colors.primary}22` },
+                ]}>
+                  <Text style={[styles.langCodeText, { color: active ? '#fff' : colors.primaryLight }]}>
+                    {code.toUpperCase()}
+                  </Text>
+                </View>
                 <Text style={[styles.langLabel, { color: active ? '#fff' : colors.textSecondary }]}>
                   {label}
                 </Text>
@@ -411,12 +418,16 @@ const styles = StyleSheet.create({
   currencySymbol: { fontSize: 15, fontWeight: '700' },
   langGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   langBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     width: '48%', height: 46, borderRadius: 13, borderWidth: 1,
-    paddingHorizontal: 12, justifyContent: 'center',
+    paddingHorizontal: 12,
   },
-  langFlag: { fontSize: 18 },
-  langLabel: { fontSize: 13, fontWeight: '600' },
+  langCode: {
+    width: 30, height: 22, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  langCodeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
+  langLabel: { fontSize: 13, fontWeight: '600', flex: 1 },
   // ── Security ──
   actionCard: { padding: 0 },
   actionCardOpen: {},

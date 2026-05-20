@@ -8,12 +8,12 @@ import it from './locales/it';
 import de from './locales/de';
 
 export const LANGUAGES = [
-  { code: 'es', label: 'Español',   flag: '🇪🇸' },
-  { code: 'en', label: 'English',   flag: '🇬🇧' },
-  { code: 'fr', label: 'Français',  flag: '🇫🇷' },
-  { code: 'pt', label: 'Português', flag: '🇵🇹' },
-  { code: 'it', label: 'Italiano',  flag: '🇮🇹' },
-  { code: 'de', label: 'Deutsch',   flag: '🇩🇪' },
+  { code: 'es', label: 'Español'   },
+  { code: 'en', label: 'English'   },
+  { code: 'fr', label: 'Français'  },
+  { code: 'pt', label: 'Português' },
+  { code: 'it', label: 'Italiano'  },
+  { code: 'de', label: 'Deutsch'   },
 ] as const;
 
 export type LanguageCode = typeof LANGUAGES[number]['code'];
