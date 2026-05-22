@@ -56,6 +56,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="history"
+        options={{
+          title: t('tab_history'),
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'time' : 'time-outline'} size={22} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="recommendations"
         options={{
           title: t('tab_ai'),

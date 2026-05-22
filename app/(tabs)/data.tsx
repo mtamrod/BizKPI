@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   Alert,
   ScrollView,
@@ -76,6 +77,8 @@ export default function DataScreen() {
   const { t } = useTranslation();
   const companyId = session?.activeCompanyId ?? 'co_001';
   const { entries, addEntry, replaceEntry, refresh, status } = useDataEntries(companyId);
+
+  useFocusEffect(useCallback(() => { refresh(); }, [refresh]));
 
   // ── Required fields ──
   const initPeriod = getDefaultPeriod('week');
@@ -414,7 +417,7 @@ export default function DataScreen() {
                 <View style={styles.entryHeader}>
                   <View style={[styles.periodPill, { backgroundColor: `${colors.primary}22` }]}>
                     <Text style={[styles.periodPillText, { color: colors.primaryLight }]}>
-                      {t('data_period_week')}
+                      {t('week_abbr')}{isoWeekNumber(entry.periodDate)}
                     </Text>
                   </View>
                   <Text style={[styles.entryDate, { color: colors.textSecondary }]}>

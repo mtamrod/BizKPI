@@ -188,4 +188,12 @@ export default {
   kpi_headline_negative_sub: 'Verlust von {{loss}}. Kostendetails analysieren.',
   kpi_empty_headline: 'Noch keine Daten erfasst.',
   kpi_empty_subtitle: 'Gehe zum Tab Daten und füge deine erste Periode hinzu, um hier KPIs zu sehen.',
+
+  tab_history: 'Verlauf',
+  history_title: 'Verlauf',
+  history_subtitle: 'Alle erfassten Wochen',
+  history_empty_title: 'Noch keine Daten',
+  history_empty_msg: 'Füge Daten im Tab Daten hinzu, um deinen Verlauf zu sehen.',
+  history_delete_title: 'Eintrag löschen',
+  history_delete_msg: '{{week}} löschen? Die Daten und die zugehörige KI-Empfehlung werden gelöscht. Dies kann nicht rückgängig gemacht werden.',
 } as const;

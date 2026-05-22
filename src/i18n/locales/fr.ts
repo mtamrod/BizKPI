@@ -188,4 +188,12 @@ export default {
   kpi_headline_negative_sub: 'Perte de {{loss}}. Analysez le détail des dépenses.',
   kpi_empty_headline: 'Aucune donnée enregistrée pour le moment.',
   kpi_empty_subtitle: "Allez dans l'onglet Données et ajoutez votre première période pour voir les KPIs ici.",
+
+  tab_history: 'Historique',
+  history_title: 'Historique',
+  history_subtitle: 'Toutes les semaines enregistrées',
+  history_empty_title: 'Aucune donnée',
+  history_empty_msg: "Ajoutez des données dans l'onglet Données pour voir votre historique.",
+  history_delete_title: 'Supprimer le registre',
+  history_delete_msg: 'Supprimer {{week}} ? Les données et la recommandation IA associée seront supprimées. Cette action est irréversible.',
 } as const;

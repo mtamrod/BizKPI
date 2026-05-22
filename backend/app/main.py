@@ -48,3 +48,8 @@ app.include_router(recommendations.router, prefix=API_PREFIX)
 @app.get("/health", tags=["health"])
 def health():
     return {"status": "ok", "version": settings.app_version, "env": settings.app_env}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

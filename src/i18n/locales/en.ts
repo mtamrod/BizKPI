@@ -188,4 +188,12 @@ export default {
   kpi_headline_negative_sub: 'Loss of {{loss}}. Analyse your expense breakdown.',
   kpi_empty_headline: 'No data recorded yet.',
   kpi_empty_subtitle: 'Go to the Data tab and add your first period to see KPIs here.',
+
+  tab_history: 'History',
+  history_title: 'History',
+  history_subtitle: 'All recorded weeks',
+  history_empty_title: 'No data yet',
+  history_empty_msg: 'Add data in the Data tab to see your history.',
+  history_delete_title: 'Delete record',
+  history_delete_msg: 'Delete {{week}}? This will remove the data and any associated AI recommendation. This cannot be undone.',
 } as const;
