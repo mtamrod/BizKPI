@@ -110,14 +110,15 @@ def _build_user_prompt(
             # El usuario proporcionó también el ingreso del producto → mostrarlo con contexto
             pct_line = ""
             if revenue > 0:
-                pct_line = f" — representa el {top_rev / revenue * 100:.1f}% de los ingresos"
+                pct_line = f" — {top_rev / revenue * 100:.1f}% de los ingresos totales"
             optional_lines.append(
-                f"- Producto/servicio estrella: {bdata['top_product_name']} ({top_rev:.2f} €{pct_line})"
+                f"- Producto/servicio más vendido del período (top seller): {bdata['top_product_name']}"
+                f" ({top_rev:.2f} €{pct_line})"
             )
         else:
-            # Solo nombre, sin revenue → no inventar "0 €" que confundiría al modelo
+            # Solo nombre, sin revenue → dejar claro que es el top seller del período
             optional_lines.append(
-                f"- Producto/servicio estrella: {bdata['top_product_name']}"
+                f"- Producto/servicio más vendido del período (top seller): {bdata['top_product_name']}"
             )
 
     if bdata.get("marketing_expenses") is not None:
