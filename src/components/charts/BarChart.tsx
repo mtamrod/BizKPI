@@ -1,11 +1,11 @@
 /**
  * @file BarChart.tsx
- * @description Vertical bar chart with gradient-highlighted recent bars.
+ * @description Gráfica de barras vertical con las barras recientes resaltadas con gradiente.
  *
- * Each bar is rendered inside a fixed-height "track" so bars are always
- * comparable in proportion. The last `highlightLast` bars are drawn with an
- * accent gradient and display their value above; earlier bars use a muted
- * fill to emphasise the most recent data.
+ * Cada barra se renderiza dentro de una "pista" de altura fija para que las barras
+ * sean siempre proporcionales entre sí. Las últimas `highlightLast` barras se dibujan
+ * con gradiente de acento y muestran su valor encima; las anteriores usan un relleno
+ * apagado para enfatizar los datos más recientes.
  *
  * @example
  * <BarChart
@@ -30,7 +30,7 @@ interface Props {
   highlightLast?: number;
 }
 
-/** Renders nothing if `points` is empty. */
+/** No renderiza nada si `points` está vacío. */
 export function BarChart({ points, highlightLast = 2 }: Props) {
   const { colors, isDark } = useTheme();
   if (!points.length) return null;

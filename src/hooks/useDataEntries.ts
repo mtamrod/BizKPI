@@ -1,18 +1,20 @@
 /**
  * @file useDataEntries.ts
- * @description Hook for managing the list of business data entries in the
- * Data tab.
+ * @description Hook para gestionar la lista de entradas de datos de negocio
+ * en la pestaña Datos.
  *
- * Optimistic UI pattern:
- * - `addEntry` immediately inserts a temporary entry into local state so the
- *   list updates without waiting for the server round-trip.
- * - On success the temporary entry is replaced by a real server sync (`load()`).
- * - On failure the temporary entry is rolled back via `ADD_ROLLBACK`.
+ * Patrón de UI optimista:
+ * - `addEntry` inserta inmediatamente una entrada temporal en el estado local
+ *   para que la lista se actualice sin esperar la respuesta del servidor.
+ * - Si tiene éxito, la entrada temporal se reemplaza por una sincronización
+ *   real con el servidor (`load()`).
+ * - Si falla, la entrada temporal se revierte mediante `ADD_ROLLBACK`.
  *
- * `replaceEntry` is intentionally non-optimistic — it deletes an existing
- * record before creating a new one, so a partial failure would leave the data
- * in an inconsistent state. The user has already confirmed the destructive
- * action, so we show a loading indicator and do a clean reload after.
+ * `replaceEntry` es intencionalmente no optimista — elimina un registro
+ * existente antes de crear uno nuevo, por lo que un fallo parcial dejaría los
+ * datos en un estado inconsistente. El usuario ya confirmó la acción
+ * destructiva, así que mostramos un indicador de carga y hacemos una recarga
+ * limpia después.
  */
 
 import { useCallback, useEffect, useReducer } from 'react';
@@ -29,9 +31,9 @@ interface State {
 type Action =
   | { type: 'FETCH_START' }
   | { type: 'FETCH_SUCCESS'; entries: DataEntry[] }
-  /** Immediately inserts a placeholder entry before the server confirms. */
+  /** Inserta inmediatamente una entrada provisional antes de que el servidor confirme. */
   | { type: 'ADD_OPTIMISTIC'; entry: DataEntry }
-  /** Removes the placeholder if the server request failed. */
+  /** Elimina la entrada provisional si la solicitud al servidor falló. */
   | { type: 'ADD_ROLLBACK'; tempId: string }
   | { type: 'ERROR'; error: string };
 
@@ -53,17 +55,17 @@ function reducer(state: State, action: Action): State {
 }
 
 /**
- * Provides the data entry list and mutation helpers for the Data tab.
+ * Proporciona la lista de entradas y las funciones de mutación para la pestaña Datos.
  *
- * @param companyId - Currently authenticated user/company ID
+ * @param companyId - ID del usuario/empresa autenticado actualmente
  *
  * @returns
- * - `entries`      — List of data entries, newest first
+ * - `entries`      — Lista de entradas de datos, más reciente primero
  * - `status`       — `'idle' | 'loading' | 'success' | 'error'`
- * - `error`        — Error message or null
- * - `addEntry`     — Creates a new entry with optimistic UI update
- * - `replaceEntry` — Overwrites an existing entry (used when a week already exists)
- * - `refresh`      — Re-fetches entries from the API
+ * - `error`        — Mensaje de error o null
+ * - `addEntry`     — Crea una nueva entrada con actualización de UI optimista
+ * - `replaceEntry` — Sobreescribe una entrada existente (se usa cuando ya existe una semana)
+ * - `refresh`      — Recarga las entradas desde la API
  */
 export function useDataEntries(companyId: string) {
   const [state, dispatch] = useReducer(reducer, {
@@ -85,14 +87,15 @@ export function useDataEntries(companyId: string) {
   useEffect(() => { load(); }, [load]);
 
   /**
-   * Adds a new business data entry.
+   * Añade una nueva entrada de datos de negocio.
    *
-   * An optimistic placeholder (with a `temp_` prefixed ID) is inserted
-   * immediately so the list feels responsive. After the API call succeeds,
-   * a full reload replaces the placeholder with the real server record.
-   * If the API call fails, the placeholder is removed and the error re-thrown.
+   * Se inserta inmediatamente un marcador de posición optimista (con ID
+   * prefijado con `temp_`) para que la lista responda rápido. Tras el éxito
+   * de la llamada a la API, una recarga completa reemplaza el marcador por el
+   * registro real del servidor. Si la llamada falla, el marcador se elimina y
+   * el error se vuelve a lanzar.
    *
-   * @param input - Form data (without `companyId`, which is injected here)
+   * @param input - Datos del formulario (sin `companyId`, que se inyecta aquí)
    */
   const addEntry = useCallback(
     async (input: Omit<CreateEntryInput, 'companyId'>) => {
@@ -128,18 +131,18 @@ export function useDataEntries(companyId: string) {
   );
 
   /**
-   * Replaces an existing entry for a week the user has already recorded.
-   * Before creating the new record:
-   * 1. Silently deletes any AI recommendation for the period (it's stale now).
-   * 2. Deletes the old `business_data` record (and its KPIs via cascade).
-   * 3. Creates a fresh record with the updated figures.
+   * Reemplaza una entrada existente de una semana ya registrada por el usuario.
+   * Antes de crear el nuevo registro:
+   * 1. Elimina silenciosamente cualquier recomendación de IA para el periodo (ya está obsoleta).
+   * 2. Elimina el antiguo registro `business_data` (y sus KPIs por cascada).
+   * 3. Crea un nuevo registro con las cifras actualizadas.
    *
-   * No optimistic update — the user confirmed the destructive action,
-   * so a clean reload is preferable to a visual glitch on failure.
+   * Sin actualización optimista — el usuario confirmó la acción destructiva,
+   * por lo que una recarga limpia es preferible a un error visual ante un fallo.
    *
-   * @param oldId    - `business_data.id` of the record to replace
-   * @param periodId - Associated period UUID (for deleting the recommendation)
-   * @param input    - New form data
+   * @param oldId    - `business_data.id` del registro a reemplazar
+   * @param periodId - UUID del periodo asociado (para eliminar la recomendación)
+   * @param input    - Nuevos datos del formulario
    */
   const replaceEntry = useCallback(
     async (oldId: string, periodId: string, input: Omit<CreateEntryInput, 'companyId'>) => {

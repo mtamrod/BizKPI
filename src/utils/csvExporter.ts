@@ -1,13 +1,13 @@
 /**
  * @file csvExporter.ts
- * @description Builds and shares a CSV file from history entries.
+ * @description Genera y comparte un fichero CSV con las entradas del historial.
  *
- * Uses a semicolon (`;`) as separator for European Excel compatibility
- * (Excel on es/fr/de locales treats `;` as the list separator by default).
+ * Usa punto y coma (`;`) como separador para compatibilidad con Excel europeo
+ * (Excel en idiomas es/fr/de usa `;` como separador de lista por defecto).
  *
- * File I/O is handled via `expo-file-system/legacy` (the legacy API is
- * required for Expo SDK 54 — the new API lacks `writeAsStringAsync`).
- * Sharing is handled via `expo-sharing`.
+ * La E/S de ficheros se gestiona con `expo-file-system/legacy` (la API legacy
+ * es necesaria para Expo SDK 54 — la nueva API carece de `writeAsStringAsync`).
+ * El compartido se gestiona con `expo-sharing`.
  */
 
 import * as FileSystem from 'expo-file-system/legacy';
@@ -16,16 +16,16 @@ import i18n from '@/i18n';
 import { isoWeekNumber, fmtDDMMYYYY } from '@/utils/periodHelpers';
 import type { HistoryEntry } from '@/hooks/useHistory';
 
-/** Thin wrapper around i18n.t so the module-level `t` works without hooks. */
+/** Adaptador ligero de i18n.t para que el `t` a nivel de módulo funcione sin hooks. */
 const t = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts);
 
 /**
- * Wraps a cell value in double quotes if it contains the separator (`;`),
- * double-quote characters, or newlines, and escapes any embedded quotes by
- * doubling them — per RFC 4180.
+ * Envuelve el valor de una celda en comillas dobles si contiene el separador (`;`),
+ * comillas dobles o saltos de línea, y escapa las comillas internas duplicándolas
+ * — según RFC 4180.
  *
- * @param value - Raw cell value (string or number)
- * @returns Safe CSV cell string
+ * @param value - Valor bruto de la celda (cadena o número)
+ * @returns Cadena de celda CSV segura
  */
 function escapeCell(value: string | number): string {
   const str = String(value);
@@ -36,12 +36,12 @@ function escapeCell(value: string | number): string {
 }
 
 /**
- * Builds the full CSV string from an array of history entries.
- * The first row is a translated header; subsequent rows are data rows,
- * one per entry, ordered as received (caller decides the sort order).
+ * Construye la cadena CSV completa a partir de un array de entradas del historial.
+ * La primera fila es la cabecera traducida; las filas siguientes son datos,
+ * una por entrada, en el orden recibido (el llamante decide el orden).
  *
- * @param entries - Filtered/sorted history entries to export
- * @returns Multi-line CSV string with `;` separator and `\n` line endings
+ * @param entries - Entradas del historial filtradas/ordenadas a exportar
+ * @returns Cadena CSV multilínea con separador `;` y saltos de línea `\n`
  */
 function buildCSV(entries: HistoryEntry[]): string {
   const abbr = t('week_abbr');
@@ -85,15 +85,15 @@ function buildCSV(entries: HistoryEntry[]): string {
 }
 
 /**
- * Exports the given history entries as a UTF-8 CSV file and opens the
- * native share sheet so the user can save or send the file.
+ * Exporta las entradas del historial indicadas como fichero CSV UTF-8 y abre
+ * el panel de compartir nativo para que el usuario pueda guardar o enviar el fichero.
  *
- * The file is written to the app's cache directory with the name
- * `historial_YYYY-MM-DD.csv` (today's date) and is automatically
- * cleaned up by the OS on the next app launch.
+ * El fichero se escribe en el directorio de caché de la app con el nombre
+ * `historial_AAAA-MM-DD.csv` (fecha de hoy) y el sistema operativo lo elimina
+ * automáticamente en el siguiente inicio de la app.
  *
- * @param entries - Entries to export (may be a filtered subset)
- * @throws If writing to the filesystem or opening the share sheet fails
+ * @param entries - Entradas a exportar (puede ser un subconjunto filtrado)
+ * @throws Si falla la escritura en el sistema de ficheros o la apertura del panel de compartir
  */
 export async function exportHistoryCSV(entries: HistoryEntry[]): Promise<void> {
   const csv = buildCSV(entries);

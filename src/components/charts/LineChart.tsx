@@ -1,10 +1,11 @@
 /**
  * @file LineChart.tsx
- * @description Gradient line chart with area fill, rendered with react-native-svg.
+ * @description Gráfica de líneas con gradiente y área rellena, renderizada con react-native-svg.
  *
- * The chart auto-scales the Y axis to the min/max of the provided data points,
- * so the trend is always visually prominent regardless of absolute value range.
- * A filled area below the line uses a vertical gradient for depth.
+ * La gráfica escala automáticamente el eje Y al min/max de los datos proporcionados,
+ * de modo que la tendencia siempre es visualmente prominente independientemente del
+ * rango de valores absolutos. El área rellena bajo la línea usa un gradiente vertical
+ * para dar profundidad.
  *
  * @example
  * <LineChart
@@ -27,14 +28,14 @@ interface Props {
 }
 
 /**
- * Maps an array of data points to SVG canvas coordinates.
- * Normalises values between `min` and `max` to the drawable area
- * `[pad, h - pad]`, ensuring points never touch the canvas edge.
+ * Transforma un array de puntos de datos a coordenadas del canvas SVG.
+ * Normaliza los valores entre `min` y `max` al área dibujable `[pad, h - pad]`,
+ * asegurando que los puntos nunca toquen el borde del canvas.
  *
- * @param points - Raw data points
- * @param w      - Canvas width (fixed at 320 viewBox units)
- * @param h      - Canvas height
- * @param pad    - Padding on all sides in viewBox units
+ * @param points - Puntos de datos brutos
+ * @param w      - Anchura del canvas (fija en 320 unidades de viewBox)
+ * @param h      - Altura del canvas
+ * @param pad    - Margen en todos los lados en unidades de viewBox
  */
 function buildCoords(
   points: ChartPoint[],
@@ -53,7 +54,7 @@ function buildCoords(
   }));
 }
 
-/** Renders nothing if `points` is empty. */
+/** No renderiza nada si `points` está vacío. */
 export function LineChart({ points, height = 160 }: Props) {
   const { colors } = useTheme();
   if (!points.length) return null;

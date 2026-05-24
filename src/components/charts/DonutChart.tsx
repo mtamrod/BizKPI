@@ -1,15 +1,15 @@
 /**
  * @file DonutChart.tsx
- * @description Animated-looking donut (ring) chart rendered with react-native-svg.
+ * @description Gráfica de donut (anillo) con aspecto animado, renderizada con react-native-svg.
  *
- * Each segment is drawn as an SVG `<Circle>` with `strokeDasharray` / `strokeDashoffset`
- * — a standard SVG technique that avoids complex arc path calculations.
- * The largest segment is placed at the top (12 o'clock) by rotating the
- * SVG group -90°. Segments are sorted largest-first so the most prominent
- * slice is always at the top-right and clearly visible.
+ * Cada segmento se dibuja como un `<Circle>` SVG con `strokeDasharray` / `strokeDashoffset`
+ * — técnica SVG estándar que evita cálculos complejos de arcos path.
+ * El segmento más grande se coloca en la parte superior (12 en punto) rotando el
+ * grupo SVG -90°. Los segmentos se ordenan de mayor a menor para que el trozo
+ * dominante siempre quede arriba a la derecha y sea claramente visible.
  *
- * A centre overlay shows the value and label of the dominant (largest) segment.
- * A legend below lists up to 4 segments with colour pills and percentages.
+ * Una superposición central muestra el valor y la etiqueta del segmento dominante.
+ * Una leyenda inferior lista hasta 4 segmentos con píldoras de color y porcentajes.
  *
  * @example
  * <DonutChart
@@ -37,7 +37,7 @@ interface Props {
   size?: number;
 }
 
-/** Renders nothing if `segments` is empty. */
+/** No renderiza nada si `segments` está vacío. */
 export function DonutChart({ segments, size = 110 }: Props) {
   const { colors } = useTheme();
   if (!segments.length) return null;

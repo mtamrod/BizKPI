@@ -1,15 +1,15 @@
 /**
  * @file useRecommendations.ts
- * @description Hook that manages the AI recommendations feature.
+ * @description Hook que gestiona la funcionalidad de recomendaciones de IA.
  *
- * Responsibilities:
- * - Loads the list of week periods that have business data (available for analysis)
- * - Loads any already-generated recommendations (avoids redundant AI calls)
- * - Tracks which periods are currently being processed by the AI (`generatingIds`)
- * - Exposes `generate` (calls the AI) and `remove` (deletes a recommendation)
+ * Responsabilidades:
+ * - Carga la lista de periodos semanales que tienen datos de negocio (disponibles para análisis)
+ * - Carga las recomendaciones ya generadas (evita llamadas redundantes a la IA)
+ * - Controla qué periodos están siendo procesados por la IA (`generatingIds`)
+ * - Expone `generate` (llama a la IA) y `remove` (elimina una recomendación)
  *
- * State is managed with `useReducer` to keep async transitions predictable and
- * testable without an external state library.
+ * El estado se gestiona con `useReducer` para mantener las transiciones asíncronas
+ * predecibles y testables sin biblioteca de estado externa.
  */
 
 import { useCallback, useEffect, useReducer } from 'react';
@@ -25,11 +25,11 @@ import type { AsyncStatus } from '@/types';
 // ─── State ────────────────────────────────────────────────────────────────────
 
 interface State {
-  /** Week periods that have at least one business_data record, newest first. */
+  /** Periodos semanales que tienen al menos un registro business_data, de más reciente a más antiguo. */
   periods: PeriodRead[];
-  /** Keyed by `period_id` — recommendations that have already been generated. */
+  /** Indexado por `period_id` — recomendaciones que ya han sido generadas. */
   recommendations: Record<string, Recommendation>;
-  /** IDs of periods whose recommendation is currently being generated. */
+  /** IDs de los periodos cuya recomendación se está generando actualmente. */
   generatingIds: string[];
   loadStatus: AsyncStatus;
   error: string | null;
@@ -86,16 +86,16 @@ function reducer(state: State, action: Action): State {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
- * Provides all data and actions needed by the Recommendations screen.
+ * Proporciona todos los datos y acciones necesarios para la pantalla de Recomendaciones.
  *
  * @returns
- * - `periods`        — Selectable week periods (have business data)
- * - `recommendations`— Map of `period_id → Recommendation` (already generated)
- * - `generatingIds`  — Period IDs currently awaiting the AI response
- * - `loadStatus`     — Overall loading status of the initial data fetch
- * - `generate`       — Triggers AI generation for a period; re-throws on error
- * - `remove`         — Deletes the recommendation for a period from API + local state
- * - `refresh`        — Re-fetches periods and recommendations
+ * - `periods`        — Periodos semanales seleccionables (tienen datos de negocio)
+ * - `recommendations`— Mapa de `period_id → Recommendation` (ya generadas)
+ * - `generatingIds`  — IDs de periodos que están esperando la respuesta de la IA
+ * - `loadStatus`     — Estado de carga general de la carga inicial de datos
+ * - `generate`       — Activa la generación de IA para un periodo; vuelve a lanzar el error si falla
+ * - `remove`         — Elimina la recomendación de un periodo de la API y del estado local
+ * - `refresh`        — Recarga los periodos y las recomendaciones
  */
 export function useRecommendations() {
   const { language } = useTheme();
@@ -135,15 +135,15 @@ export function useRecommendations() {
   useEffect(() => { load(); }, [load]);
 
   /**
-   * Requests AI generation for the given period. The `language` from the
-   * active theme is passed to the backend so the recommendation text is
-   * returned in the user's selected language.
+   * Solicita la generación de IA para el periodo indicado. El `language` del
+   * tema activo se pasa al backend para que el texto de la recomendación se
+   * devuelva en el idioma seleccionado por el usuario.
    *
-   * Marks the period as `generating` while the request is in flight, and
-   * updates the local recommendations map on success.
-   * Re-throws the error so the UI can display an appropriate alert.
+   * Marca el periodo como `generating` mientras la solicitud está en curso, y
+   * actualiza el mapa de recomendaciones local si tiene éxito. Vuelve a lanzar
+   * el error para que la UI pueda mostrar una alerta apropiada.
    *
-   * @param periodId - UUID of the period to analyse
+   * @param periodId - UUID del periodo a analizar
    */
   const generate = useCallback(async (periodId: string) => {
     dispatch({ type: 'GENERATE_START', periodId });
@@ -158,10 +158,10 @@ export function useRecommendations() {
   }, [language]);
 
   /**
-   * Deletes the recommendation for a period from the API and removes it from
-   * local state so the UI reflects the change immediately.
+   * Elimina la recomendación de un periodo de la API y la quita del estado local
+   * para que la UI refleje el cambio de inmediato.
    *
-   * @param periodId - UUID of the period whose recommendation to delete
+   * @param periodId - UUID del periodo cuya recomendación se quiere eliminar
    */
   const remove = useCallback(async (periodId: string) => {
     await recommendationService.delete(periodId);

@@ -1,12 +1,12 @@
 /**
  * @file useKPIs.ts
- * @description Hook that loads the dashboard KPI data from `kpiService` and
- * exposes it with a standard async status pattern.
+ * @description Hook que carga los datos KPI del dashboard desde `kpiService`
+ * y los expone con el patrón de estado asíncrono estándar.
  *
- * Re-fetches automatically when `companyId`, `currency` or `language` changes.
- * The `language` dependency is intentional: `kpiService.getDashboard` calls
- * `i18n.t` to format labels and headlines, so the hook must reload whenever
- * the locale switches to pick up the new translations.
+ * Vuelve a cargar automáticamente cuando cambia `companyId`, `currency` o `language`.
+ * La dependencia de `language` es intencional: `kpiService.getDashboard` llama a
+ * `i18n.t` para formatear etiquetas y titulares, por lo que el hook debe recargar
+ * al cambiar el idioma para obtener las nuevas traducciones.
  */
 
 import { useCallback, useEffect, useReducer } from 'react';
@@ -34,18 +34,18 @@ function reducer(state: State, action: Action): State {
 }
 
 /**
- * Loads and manages the `DashboardData` payload for the Home screen.
+ * Carga y gestiona el payload `DashboardData` para la pantalla de inicio.
  *
- * @param companyId - Currently authenticated company / user ID
- * @param currency  - Currency symbol forwarded to `kpiService` (default `'€'`)
- * @param language  - Active locale code; triggers a reload on change so
- *   formatted labels rebuild in the new language (default `'es'`)
+ * @param companyId - ID de la empresa / usuario autenticado actualmente
+ * @param currency  - Símbolo de moneda que se pasa a `kpiService` (por defecto `'€'`)
+ * @param language  - Código de idioma activo; provoca una recarga al cambiar para
+ *   que las etiquetas formateadas se reconstruyan en el nuevo idioma (por defecto `'es'`)
  *
  * @returns
- * - `data`    — The full `DashboardData` object, or `null` while loading
+ * - `data`    — El objeto `DashboardData` completo, o `null` mientras carga
  * - `status`  — `'idle' | 'loading' | 'success' | 'error'`
- * - `error`   — Error message string, or `null`
- * - `refresh` — Manually triggers a fresh fetch (used by pull-to-refresh)
+ * - `error`   — Mensaje de error o `null`
+ * - `refresh` — Fuerza una nueva carga manual (usado por pull-to-refresh)
  */
 export function useKPIs(companyId: string, currency = '€', language = 'es') {
   const [state, dispatch] = useReducer(reducer, {

@@ -1,13 +1,15 @@
 /**
  * @file periodService.ts
- * @description API service for period records.
+ * @description Servicio API para los registros de periodo.
  *
- * A `Period` is the time range that a business data entry covers (day, week or
- * month). Periods are shared across the user's entries — if two entries cover
- * the same week, they reference the same `Period` row in the database.
+ * Un `Period` es el rango de tiempo que cubre una entrada de datos de negocio
+ * (día, semana o mes). Los periodos son compartidos entre las entradas del
+ * usuario — si dos entradas cubren la misma semana, referencian la misma fila
+ * `Period` en la base de datos.
  *
- * `findOrCreate` is the primary entry point: it avoids creating duplicate
- * period rows by checking for an exact date-range match before posting.
+ * `findOrCreate` es el punto de entrada principal: evita crear filas de periodo
+ * duplicadas comprobando si existe una coincidencia exacta de rango de fechas
+ * antes de hacer el POST.
  */
 
 import { apiClient } from '@/lib/apiClient';
@@ -15,15 +17,15 @@ import type { PeriodType } from '@/types';
 
 // ─── Backend types ────────────────────────────────────────────────────────────
 
-/** Period record as returned by `GET /periods/` and `POST /periods/`. */
+/** Registro de periodo tal como lo devuelven `GET /periods/` y `POST /periods/`. */
 export interface PeriodRead {
   id: string;
   user_id: string;
-  /** Granularity: 'day' | 'week' | 'month' */
+  /** Granularidad: 'day' | 'week' | 'month' */
   period_type: PeriodType;
-  /** ISO date "YYYY-MM-DD" — always a Monday for weekly periods. */
+  /** Fecha ISO "YYYY-MM-DD" — siempre un lunes para periodos semanales. */
   start_date: string;
-  /** ISO date "YYYY-MM-DD" — always a Sunday for weekly periods. */
+  /** Fecha ISO "YYYY-MM-DD" — siempre un domingo para periodos semanales. */
   end_date: string;
   created_at: string | null;
 }
@@ -31,16 +33,16 @@ export interface PeriodRead {
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
 /**
- * Computes the canonical `[start_date, end_date]` for a period type given a
- * reference date. Used to normalise user-selected dates before looking up or
- * creating a period record.
+ * Calcula el par canónico `[start_date, end_date]` para un tipo de periodo dado
+ * una fecha de referencia. Se usa para normalizar las fechas seleccionadas por
+ * el usuario antes de buscar o crear un registro de periodo.
  *
- * - `'day'`   → the reference date itself
- * - `'week'`  → the Monday–Sunday ISO week containing the reference date
- * - `'month'` → the first and last day of the reference date's month
+ * - `'day'`   → la propia fecha de referencia
+ * - `'week'`  → la semana ISO lunes–domingo que contiene la fecha de referencia
+ * - `'month'` → el primer y último día del mes de la fecha de referencia
  *
- * @param period        - Period granularity
- * @param referenceDate - Any date within the desired period ("YYYY-MM-DD")
+ * @param period        - Granularidad del periodo
+ * @param referenceDate - Cualquier fecha dentro del periodo deseado ("YYYY-MM-DD")
  */
 export function computePeriodDates(
   period: PeriodType,
@@ -80,25 +82,26 @@ export function computePeriodDates(
 
 export const periodService = {
   /**
-   * Returns all period records for the authenticated user.
-   * Results are in creation order (newest last); callers sort as needed.
+   * Devuelve todos los registros de periodo del usuario autenticado.
+   * Los resultados están en orden de creación (el más reciente al final);
+   * los llamantes ordenan según sea necesario.
    */
   async list(): Promise<PeriodRead[]> {
     return apiClient.get<PeriodRead[]>('/periods/');
   },
 
   /**
-   * Returns an existing period that exactly matches the given date range, or
-   * creates a new one if none exists.
+   * Devuelve un periodo existente que coincide exactamente con el rango de fechas
+   * dado, o crea uno nuevo si no existe ninguno.
    *
-   * The match is exact: both `start_date`, `end_date` and `period_type` must
-   * agree. This prevents phantom duplicates when the user submits data for the
-   * same week twice (the second submission reuses the same period row).
+   * La coincidencia es exacta: `start_date`, `end_date` y `period_type` deben
+   * concordar. Esto evita duplicados fantasma cuando el usuario envía datos de la
+   * misma semana dos veces (el segundo envío reutiliza la misma fila de periodo).
    *
-   * @param period     - Period granularity ('day' | 'week' | 'month')
-   * @param start_date - First day of the period ("YYYY-MM-DD")
-   * @param end_date   - Last day of the period ("YYYY-MM-DD")
-   * @returns The matched or newly created period record
+   * @param period     - Granularidad del periodo ('day' | 'week' | 'month')
+   * @param start_date - Primer día del periodo ("YYYY-MM-DD")
+   * @param end_date   - Último día del periodo ("YYYY-MM-DD")
+   * @returns El registro de periodo encontrado o recién creado
    */
   async findOrCreate(
     period: PeriodType,

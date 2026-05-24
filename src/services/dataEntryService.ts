@@ -1,12 +1,12 @@
 /**
  * @file dataEntryService.ts
- * @description API service for business data entries (the raw weekly figures
- * submitted by the user: revenue, expenses, sales count, customer count, etc.).
+ * @description Servicio API para las entradas de datos de negocio (las cifras
+ * semanales brutas introducidas por el usuario: ingresos, gastos, ventas, clientes, etc.).
  *
- * Flow for creating an entry:
- *  1. Find or create the `Period` record that covers the selected date range.
- *  2. POST the business data to `/business-data/`.
- *  3. The backend automatically calculates and stores KPIs for that period.
+ * Flujo para crear una entrada:
+ *  1. Encuentra o crea el registro `Period` que abarca el rango de fechas seleccionado.
+ *  2. Envía los datos de negocio a `/business-data/` mediante POST.
+ *  3. El backend calcula y almacena automáticamente los KPIs para ese periodo.
  */
 
 import { apiClient } from '@/lib/apiClient';
@@ -16,7 +16,7 @@ import type { PeriodRead } from './periodService';
 
 // ─── Backend types ────────────────────────────────────────────────────────────
 
-/** Payload sent to `POST /business-data/`. */
+/** Payload enviado a `POST /business-data/`. */
 interface BusinessDataCreate {
   period_id: string;
   total_revenue: number;
@@ -32,7 +32,7 @@ interface BusinessDataCreate {
   notes?: string;
 }
 
-/** Shape of a business data record returned by the API. */
+/** Estructura de un registro de datos de negocio devuelto por la API. */
 interface BusinessDataRead {
   id: string;
   period_id: string;
@@ -55,12 +55,13 @@ interface BusinessDataRead {
 // ─── Conversion helpers ───────────────────────────────────────────────────────
 
 /**
- * Maps a raw API `BusinessDataRead` record (snake_case) to the app's
- * internal `DataEntry` type (camelCase). Falls back to sensible defaults
- * when optional fields are null or the period record is not available.
+ * Transforma un registro bruto `BusinessDataRead` de la API (snake_case) al
+ * tipo interno `DataEntry` de la app (camelCase). Usa valores predeterminados
+ * sensatos cuando los campos opcionales son null o el registro de periodo no
+ * está disponible.
  *
- * @param bd     - Raw API record
- * @param period - Associated period (may be undefined if period fetch failed)
+ * @param bd     - Registro bruto de la API
+ * @param period - Periodo asociado (puede ser undefined si la carga del periodo falló)
  */
 function toDataEntry(bd: BusinessDataRead, period: PeriodRead | undefined): DataEntry {
   const startISO = period?.start_date ?? bd.created_at?.slice(0, 10) ?? new Date().toISOString().slice(0, 10);
@@ -86,11 +87,12 @@ function toDataEntry(bd: BusinessDataRead, period: PeriodRead | undefined): Data
 
 export const dataEntryService = {
   /**
-   * Fetches all business data entries for the authenticated user and enriches
-   * each record with its associated period metadata (date range, type).
-   * Periods and business data are fetched in parallel to minimise latency.
+   * Obtiene todas las entradas de datos de negocio del usuario autenticado y
+   * enriquece cada registro con los metadatos de su periodo asociado (rango de
+   * fechas, tipo). Los periodos y los datos se cargan en paralelo para minimizar
+   * la latencia.
    *
-   * @param _companyId - Currently unused (the backend derives the user from the JWT)
+   * @param _companyId - No usado actualmente (el backend deduce el usuario del JWT)
    */
   async getEntries(_companyId: string): Promise<DataEntry[]> {
     const [bdataList, periods] = await Promise.all([
@@ -103,16 +105,16 @@ export const dataEntryService = {
   },
 
   /**
-   * Creates a new business data entry for the given date range.
+   * Crea una nueva entrada de datos de negocio para el rango de fechas indicado.
    *
-   * Steps:
-   * 1. Calls `periodService.findOrCreate` to obtain (or create) the matching
-   *    `Period` record for the selected week/day/month.
-   * 2. Posts the entry to `/business-data/`; the backend calculates KPIs
-   *    automatically and stores them in a separate `kpis` table.
+   * Pasos:
+   * 1. Llama a `periodService.findOrCreate` para obtener (o crear) el registro
+   *    `Period` correspondiente a la semana/día/mes seleccionado.
+   * 2. Envía la entrada a `/business-data/`; el backend calcula los KPIs
+   *    automáticamente y los almacena en la tabla `kpis`.
    *
-   * @param input - Form data submitted by the user
-   * @returns The created entry mapped to the app's `DataEntry` type
+   * @param input - Datos del formulario enviados por el usuario
+   * @returns La entrada creada, transformada al tipo `DataEntry` de la app
    */
   async addEntry(input: CreateEntryInput): Promise<DataEntry> {
     // 1. Find or create the period for this date range
@@ -142,12 +144,12 @@ export const dataEntryService = {
   },
 
   /**
-   * Hard-deletes a business data record by its ID.
-   * The backend cascades this deletion to the associated KPI record.
-   * Any AI recommendation for the same period must be deleted separately
-   * via `recommendationService.delete(periodId)`.
+   * Elimina permanentemente un registro de datos de negocio por su ID.
+   * El backend propaga este borrado al registro KPI asociado en cascada.
+   * Cualquier recomendación de IA para el mismo periodo debe eliminarse por
+   * separado mediante `recommendationService.delete(periodId)`.
    *
-   * @param id - `business_data.id` (not the period ID)
+   * @param id - `business_data.id` (no el ID del periodo)
    */
   async deleteEntry(id: string): Promise<void> {
     await apiClient.delete(`/business-data/${id}`);

@@ -1,17 +1,19 @@
 /**
  * @file RecoBody.tsx
- * @description Shared read-only view of an AI `Recommendation` object.
+ * @description Vista de solo lectura compartida de un objeto `Recommendation` de IA.
  *
- * Renders four sections in order:
- * 1. **Summary card** — AI-generated overview + generation date + model used
- * 2. **Highlights**   — List of `RecommendationHighlight` items with positive /
- *    negative / neutral colour coding and icons
- * 3. **Actions**      — Numbered `RecommendationAction` cards with priority
- *    badges (high → red, medium → amber, low → green)
- * 4. **Forecast**     — Free-text next-week outlook (only when present)
+ * Renderiza cuatro secciones en orden:
+ * 1. **Tarjeta de resumen** — Resumen generado por IA + fecha de generación + modelo usado
+ * 2. **Destacados**         — Lista de elementos `RecommendationHighlight` con
+ *    codificación de color e iconos según tipo positivo / negativo / neutro
+ * 3. **Acciones**           — Tarjetas `RecommendationAction` numeradas con badges
+ *    de prioridad (alta → rojo, media → ámbar, baja → verde)
+ * 4. **Previsión**          — Perspectiva de texto libre para la próxima semana
+ *    (solo cuando está disponible)
  *
- * Sections 2–4 are rendered only when the corresponding array/field is
- * non-empty, so the component degrades gracefully for partial AI responses.
+ * Las secciones 2–4 solo se renderizan cuando el array/campo correspondiente
+ * no está vacío, por lo que el componente degrada correctamente ante respuestas
+ * de IA incompletas.
  *
  * @example
  * <RecoBody reco={recommendation} />
@@ -30,11 +32,11 @@ import type {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 /**
- * Renders a single highlight item as a left-bordered card.
- * The border colour, icon and text colour are determined by `item.type`:
- * - `'positive'` → green trending-up icon
- * - `'negative'` → red trending-down icon
- * - `'neutral'`  → blue neutral icon
+ * Renderiza un elemento de destacado como tarjeta con borde izquierdo.
+ * El color del borde, el icono y el color del texto se determinan según `item.type`:
+ * - `'positive'` → icono verde de tendencia al alza
+ * - `'negative'` → icono rojo de tendencia a la baja
+ * - `'neutral'`  → icono azul neutro
  */
 function HighlightCard({ item }: { item: RecommendationHighlight }) {
   const { colors } = useTheme();
@@ -56,14 +58,14 @@ function HighlightCard({ item }: { item: RecommendationHighlight }) {
 }
 
 /**
- * Renders a single recommended action as a `GlassCard` with:
- * - A numbered index badge (1-based)
- * - The business area in small caps
- * - A colour-coded priority badge
- * - The action text and its rationale
+ * Renderiza una acción recomendada como `GlassCard` con:
+ * - Un badge de índice numerado (base 1)
+ * - El área de negocio en versalitas
+ * - Un badge de prioridad con código de color
+ * - El texto de la acción y su justificación
  *
- * @param item  - The action to display
- * @param index - Zero-based position in the actions array (displayed as 1-based)
+ * @param item  - La acción a mostrar
+ * @param index - Posición base 0 en el array de acciones (se muestra como base 1)
  */
 function ActionCard({ item, index }: { item: RecommendationAction; index: number }) {
   const { colors } = useTheme();
@@ -94,13 +96,13 @@ function ActionCard({ item, index }: { item: RecommendationAction; index: number
 // ─── RecoBody ─────────────────────────────────────────────────────────────────
 
 /**
- * Displays the full content of an AI recommendation.
+ * Muestra el contenido completo de una recomendación de IA.
  *
- * All text is read-only — action buttons (regenerate, delete) are the
- * responsibility of the parent screen, keeping this component purely
- * presentational and reusable.
+ * Todo el contenido es de solo lectura — los botones de acción (regenerar,
+ * eliminar) son responsabilidad de la pantalla padre, manteniendo este
+ * componente puramente presentacional y reutilizable.
  *
- * @param reco - The `Recommendation` object returned by `recommendationService`
+ * @param reco - El objeto `Recommendation` devuelto por `recommendationService`
  */
 export function RecoBody({ reco }: { reco: Recommendation }) {
   const { colors, language } = useTheme();
