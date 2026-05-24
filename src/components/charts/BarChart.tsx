@@ -1,3 +1,19 @@
+/**
+ * @file BarChart.tsx
+ * @description Vertical bar chart with gradient-highlighted recent bars.
+ *
+ * Each bar is rendered inside a fixed-height "track" so bars are always
+ * comparable in proportion. The last `highlightLast` bars are drawn with an
+ * accent gradient and display their value above; earlier bars use a muted
+ * fill to emphasise the most recent data.
+ *
+ * @example
+ * <BarChart
+ *   points={weeklySeries}
+ *   highlightLast={2}
+ * />
+ */
+
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -5,32 +21,38 @@ import { useTheme } from '@/theme/ThemeContext';
 import type { ChartPoint } from '@/types';
 
 interface Props {
+  /** Data points to render as bars, left to right. */
   points: ChartPoint[];
-  /** How many trailing bars to render in accent (green) color */
+  /**
+   * How many trailing bars (from the right) to render with the accent gradient
+   * and value label. Defaults to 2 (current + previous week).
+   */
   highlightLast?: number;
 }
 
+/** Renders nothing if `points` is empty. */
 export function BarChart({ points, highlightLast = 2 }: Props) {
   const { colors, isDark } = useTheme();
   if (!points.length) return null;
+
   const max = Math.max(...points.map((p) => p.value), 1);
-  const TRACK_H = 100;
+  const TRACK_H = 100; // fixed track height in logical pixels
 
   return (
     <View style={styles.container}>
       {points.map((p, i) => {
-        const barH  = Math.max((p.value / max) * (TRACK_H - 8), 5);
+        // Minimum bar height of 5px so zero-value weeks are still visible
+        const barH = Math.max((p.value / max) * (TRACK_H - 8), 5);
         const highlighted = i >= points.length - highlightLast;
 
         return (
           <View key={i} style={styles.col}>
-            {/* Value label — only visible on highlighted bars */}
+            {/* Value label — only rendered (visible) on highlighted bars */}
             <Text
               style={[
                 styles.valueLabel,
                 {
                   color: highlighted ? colors.accentLight : 'transparent',
-                  // Prevent the OS from substituting black when color is transparent
                   opacity: highlighted ? 1 : 0,
                 },
               ]}
@@ -38,7 +60,7 @@ export function BarChart({ points, highlightLast = 2 }: Props) {
               {p.value}
             </Text>
 
-            {/* Track */}
+            {/* Track — the fixed-height background container for the bar */}
             <View
               style={[
                 styles.track,
@@ -51,6 +73,7 @@ export function BarChart({ points, highlightLast = 2 }: Props) {
               ]}
             >
               {highlighted ? (
+                // Accent gradient bar for recent weeks
                 <LinearGradient
                   colors={[colors.accentLight, colors.accent]}
                   start={{ x: 0.5, y: 0 }}
@@ -58,6 +81,7 @@ export function BarChart({ points, highlightLast = 2 }: Props) {
                   style={[styles.bar, { height: barH }]}
                 />
               ) : (
+                // Muted bar for older weeks
                 <View
                   style={[
                     styles.bar,
@@ -72,7 +96,7 @@ export function BarChart({ points, highlightLast = 2 }: Props) {
               )}
             </View>
 
-            {/* Day label */}
+            {/* X-axis label (week abbreviation, e.g. "S18") */}
             <Text style={[styles.dayLabel, { color: colors.textSecondary }]}>
               {p.label}
             </Text>

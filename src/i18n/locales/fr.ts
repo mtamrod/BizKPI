@@ -217,6 +217,7 @@ export default {
   history_csv_customers: 'Clients',
   history_csv_avg_ticket: 'Ticket moyen',
   history_csv_reco: 'Recommandation IA',
+  history_detail_breakdown: 'Répartition des revenus',
   history_detail_metrics: 'Métriques',
   history_detail_no_reco: 'Aucune recommandation pour cette semaine',
 } as const;

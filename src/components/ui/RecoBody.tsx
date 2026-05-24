@@ -1,7 +1,20 @@
 /**
- * RecoBody — shared read-only view of a Recommendation's content.
- * Renders: summary card · highlights · actions · forecast.
- * Used by both the Recommendations tab and the History detail screen.
+ * @file RecoBody.tsx
+ * @description Shared read-only view of an AI `Recommendation` object.
+ *
+ * Renders four sections in order:
+ * 1. **Summary card** — AI-generated overview + generation date + model used
+ * 2. **Highlights**   — List of `RecommendationHighlight` items with positive /
+ *    negative / neutral colour coding and icons
+ * 3. **Actions**      — Numbered `RecommendationAction` cards with priority
+ *    badges (high → red, medium → amber, low → green)
+ * 4. **Forecast**     — Free-text next-week outlook (only when present)
+ *
+ * Sections 2–4 are rendered only when the corresponding array/field is
+ * non-empty, so the component degrades gracefully for partial AI responses.
+ *
+ * @example
+ * <RecoBody reco={recommendation} />
  */
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +29,13 @@ import type {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+/**
+ * Renders a single highlight item as a left-bordered card.
+ * The border colour, icon and text colour are determined by `item.type`:
+ * - `'positive'` → green trending-up icon
+ * - `'negative'` → red trending-down icon
+ * - `'neutral'`  → blue neutral icon
+ */
 function HighlightCard({ item }: { item: RecommendationHighlight }) {
   const { colors } = useTheme();
   const CONFIG = {
@@ -35,6 +55,16 @@ function HighlightCard({ item }: { item: RecommendationHighlight }) {
   );
 }
 
+/**
+ * Renders a single recommended action as a `GlassCard` with:
+ * - A numbered index badge (1-based)
+ * - The business area in small caps
+ * - A colour-coded priority badge
+ * - The action text and its rationale
+ *
+ * @param item  - The action to display
+ * @param index - Zero-based position in the actions array (displayed as 1-based)
+ */
 function ActionCard({ item, index }: { item: RecommendationAction; index: number }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -63,6 +93,15 @@ function ActionCard({ item, index }: { item: RecommendationAction; index: number
 
 // ─── RecoBody ─────────────────────────────────────────────────────────────────
 
+/**
+ * Displays the full content of an AI recommendation.
+ *
+ * All text is read-only — action buttons (regenerate, delete) are the
+ * responsibility of the parent screen, keeping this component purely
+ * presentational and reusable.
+ *
+ * @param reco - The `Recommendation` object returned by `recommendationService`
+ */
 export function RecoBody({ reco }: { reco: Recommendation }) {
   const { colors, language } = useTheme();
   const { t } = useTranslation();

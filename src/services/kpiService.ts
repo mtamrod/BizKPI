@@ -1,3 +1,22 @@
+/**
+ * @file kpiService.ts
+ * @description Service that fetches raw API data and builds the complete
+ * `DashboardData` payload consumed by the Home screen.
+ *
+ * The main entry point is `kpiService.getDashboard`. Internally it:
+ * 1. Fetches KPIs, business_data records and periods in parallel.
+ * 2. Uses `business_data` as the source of truth — if none exist, returns an
+ *    empty-state dashboard rather than showing stale KPI records.
+ * 3. Deduplicates KPIs by `period_id` (keeps only the latest per period).
+ * 4. Sorts all KPIs ascending by period start_date so chart series always
+ *    have the current week at the right-most position.
+ * 5. Assembles metrics, chart series, category segments and a headline from
+ *    the latest (and optionally second-to-latest) week's data.
+ *
+ * All formatted strings go through `i18n.t` so the dashboard updates
+ * automatically when the user switches language.
+ */
+
 import { apiClient } from '@/lib/apiClient';
 import { isoWeekNumber } from '@/utils/periodHelpers';
 import i18n from '@/i18n';
@@ -8,6 +27,10 @@ const t = (key: string, opts?: Record<string, unknown>) => i18n.t(key, opts);
 
 // ─── Backend types ────────────────────────────────────────────────────────────
 
+/**
+ * KPI record as returned by the `/kpis/` endpoint.
+ * Computed server-side from the associated `business_data` entry.
+ */
 interface KpiRead {
   id: string;
   period_id: string;
@@ -15,7 +38,8 @@ interface KpiRead {
   revenue: number;
   expenses: number;
   net_profit: number;
-  profit_margin: number;     // 0-100 percentage
+  /** Profit margin expressed as a 0–100 percentage. */
+  profit_margin: number;
   num_sales: number;
   num_customers: number;
   avg_ticket: number;
@@ -25,6 +49,11 @@ interface KpiRead {
   calculated_at: string | null;
 }
 
+/**
+ * Business data record as returned by the `/business-data/` endpoint.
+ * Contains the raw figures entered by the user; optional fields are
+ * `null` when not provided.
+ */
 interface BusinessDataRead {
   id: string;
   period_id: string;
@@ -47,12 +76,28 @@ interface BusinessDataRead {
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
-/** Convierte cualquier valor numérico/null/undefined a number seguro. */
+/**
+ * Safely converts any numeric/null/undefined value to a `number`.
+ * Returns `0` for `NaN`, `null` or `undefined` to prevent downstream
+ * arithmetic from producing unexpected `NaN` values.
+ *
+ * @param v - The value to convert
+ */
 function n(v: number | null | undefined): number {
   const num = Number(v);
   return isNaN(num) ? 0 : num;
 }
 
+/**
+ * Formats a monetary value as a compact string with the given currency symbol.
+ *
+ * - ≥ 1 000 000 → `€1.2M`
+ * - ≥ 1 000     → `€12.5k`
+ * - < 1 000     → `€345` (rounded, locale-formatted)
+ *
+ * @param value  - Raw numeric amount (null/undefined → treated as 0)
+ * @param symbol - Currency prefix, e.g. `'€'` or `'$'`
+ */
 function formatCurrency(value: number | null | undefined, symbol = '€'): string {
   const v = n(value);
   if (v >= 1_000_000) {
@@ -66,10 +111,22 @@ function formatCurrency(value: number | null | undefined, symbol = '€'): strin
   return `${symbol}${Math.round(v).toLocaleString('es-ES')}`;
 }
 
+/**
+ * Formats a 0–100 percentage value to one decimal place, e.g. `"23.4%"`.
+ *
+ * @param value - Percentage (null/undefined → treated as 0)
+ */
 function formatPct(value: number | null | undefined): string {
   return `${n(value).toFixed(1)}%`;
 }
 
+/**
+ * Computes the week-over-week percentage change from `previous` to `current`.
+ * Returns `0` if `previous` is zero (avoids division-by-zero).
+ *
+ * @param current  - Current period value
+ * @param previous - Previous period value
+ */
 function pctDelta(current: number | null | undefined, previous: number | null | undefined): number {
   const c = n(current);
   const p = n(previous);
@@ -78,8 +135,15 @@ function pctDelta(current: number | null | undefined, previous: number | null | 
 }
 
 /**
- * Returns a short week label: "S20" (same year) or "S1 '26" (cross-year).
- * Uses the period's start_date (always a Monday).
+ * Returns a short week label for chart X-axis ticks.
+ *
+ * - Same year as `currentYear` → `"S20"` (abbreviated week number)
+ * - Different year             → `"S1 '26"` (includes 2-digit year)
+ * - Period not found           → `"S<fallbackIndex + 1>"` (1-based fallback)
+ *
+ * @param period        - The `PeriodRead` whose start_date provides the Monday
+ * @param fallbackIndex - Zero-based index used when `period` is undefined
+ * @param currentYear   - The current calendar year (for same-year optimisation)
  */
 function weekLabel(
   period: PeriodRead | undefined,
@@ -96,6 +160,22 @@ function weekLabel(
 
 // ─── Dashboard builders ───────────────────────────────────────────────────────
 
+/**
+ * Builds the four headline `KpiMetric` cards shown on the dashboard.
+ *
+ * Each metric includes:
+ * - `formattedValue` — display-ready string (currency or count)
+ * - `delta`          — absolute week-over-week change (always ≥ 0; direction
+ *   is conveyed by `trend`)
+ * - `trend`          — `'up'` or `'down'`
+ *
+ * If no previous week exists (`prev === undefined`) all deltas default to `0`
+ * with trend `'up'` so new users see neutral, non-alarming indicators.
+ *
+ * @param latest   - KPIs for the most recent week
+ * @param prev     - KPIs for the previous week, or `undefined` if none exists
+ * @param currency - Currency symbol passed through to `formatCurrency`
+ */
 function buildMetrics(latest: KpiRead, prev: KpiRead | undefined, currency: string): KpiMetric[] {
   const revDelta = prev ? pctDelta(latest.revenue, prev.revenue) : 0;
   const custDelta = prev ? pctDelta(latest.num_customers, prev.num_customers) : 0;
@@ -146,6 +226,22 @@ function buildMetrics(latest: KpiRead, prev: KpiRead | undefined, currency: stri
   ];
 }
 
+/**
+ * Builds the `CategorySegment[]` array used by the dashboard's DonutChart.
+ *
+ * Two modes depending on available data:
+ * 1. **Detailed** (when `cost_of_goods_sold` AND `marketing_expenses` are
+ *    present): 4 segments — Profit · COGS · Marketing · Other expenses.
+ * 2. **Fallback** (when either field is null): 2 segments — Profit vs.
+ *    Expenses (simple profit-margin split).
+ *
+ * Values are expressed as rounded percentages of the total so all segments
+ * always sum to 100 (±1 due to rounding). Segments with a 0 % value are
+ * filtered out to avoid invisible arcs on the donut.
+ *
+ * @param latest      - KPIs for the most recent week
+ * @param latestBData - Business data record for the same week (may be undefined)
+ */
 function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | undefined): CategorySegment[] {
   const revenue = n(latest.revenue) || 1;
   const netProfit = Math.max(0, n(latest.net_profit));
@@ -172,6 +268,19 @@ function buildCategorySeries(latest: KpiRead, latestBData: BusinessDataRead | un
   ];
 }
 
+/**
+ * Generates the motivational headline and subtitle shown at the top of the
+ * dashboard based on the latest week's profit margin:
+ *
+ * - **≥ 20 %** → strong performance message with margin + avg. ticket
+ * - **≥ 0 %**  → stable performance message with margin
+ * - **< 0 %**  → loss warning with absolute net-loss amount
+ *
+ * All strings come from i18n so they localise automatically.
+ *
+ * @param latest   - KPIs for the most recent week
+ * @param currency - Currency symbol for formatting monetary values
+ */
 function buildHeadline(latest: KpiRead, currency: string): { headline: string; subtitle: string } {
   const margin = n(latest.profit_margin);
   if (margin >= 20) {
@@ -194,6 +303,14 @@ function buildHeadline(latest: KpiRead, currency: string): { headline: string; s
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
+/**
+ * Creates a single placeholder `KpiMetric` with zeroed values and a `'—'`
+ * display string. Used to populate the dashboard when there is no data yet.
+ *
+ * @param id       - Stable metric identifier (e.g. `'revenue'`)
+ * @param labelKey - i18n key for the metric label
+ * @param icon     - Ionicons name for the metric icon
+ */
 function emptyMetric(id: string, labelKey: string, icon: KpiMetric['icon']): KpiMetric {
   return {
     id,
@@ -226,6 +343,26 @@ function getEmptyDashboard(): DashboardData {
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const kpiService = {
+  /**
+   * Fetches all required data and assembles a complete `DashboardData` object
+   * ready for direct consumption by the Home screen.
+   *
+   * Data flow:
+   * 1. Fetch `/kpis/`, `/business-data/` and `/periods/` in parallel.
+   * 2. Return `getEmptyDashboard()` if no `business_data` records exist.
+   * 3. Filter out KPIs whose period no longer has a `business_data` record
+   *    (guards against stale records after a delete operation).
+   * 4. Deduplicate KPIs by `period_id` (only the first occurrence is kept,
+   *    since the API already returns them newest-first).
+   * 5. Sort ascending by `period.start_date` so chart series run left → right
+   *    chronologically.
+   * 6. Build metrics (last 2 weeks), revenue series (last 6), sales series
+   *    (last 7), category segments, and a contextual headline.
+   *
+   * @param _companyId - Currently authenticated company ID (reserved for
+   *   multi-tenant filtering in a future API version; ignored for now)
+   * @param currency   - Currency symbol prepended to monetary values (default `'€'`)
+   */
   async getDashboard(_companyId: string, currency = '€'): Promise<DashboardData> {
     // Fetch all data in parallel
     const [kpis, bDataList, periods] = await Promise.all([

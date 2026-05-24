@@ -3,6 +3,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
+import { DonutChart } from '@/components/charts/DonutChart';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { useTheme } from '@/theme/ThemeContext';
 import { fmt } from '@/utils/formatters';
 import { formatPeriodRange, isoWeekNumber } from '@/utils/periodHelpers';
@@ -55,6 +57,17 @@ export default function HistoryDetailScreen() {
 
   const weekBadge = `${t('week_abbr')}${isoWeekNumber(period.start_date)}`;
   const range     = formatPeriodRange('week', period.start_date, period.end_date, language);
+
+  // ── Donut segments (revenue breakdown) ───────────────────────────────────
+  const revenue  = Math.max(Number(kpi.revenue), 1);
+  const expenses = Math.max(0, Number(kpi.expenses));
+  const profit   = Math.max(0, Number(kpi.net_profit));
+  const expPct    = Math.round((expenses / revenue) * 100);
+  const profitPct = Math.max(0, 100 - expPct);
+  const donutSegments = [
+    { id: 'profit',   label: t('data_profit'),          value: profitPct, color: '#10B981' },
+    { id: 'expenses', label: t('history_csv_expenses'),  value: expPct,    color: '#EF4444' },
+  ].filter((s) => s.value > 0);
 
   // ── Delete ────────────────────────────────────────────────────────────────
   const handleDelete = () => {
@@ -119,6 +132,14 @@ export default function HistoryDetailScreen() {
           </View>
         )}
       </View>
+
+      {/* ── Donut breakdown ──────────────────────────────────────────────── */}
+      <GlassCard style={styles.donutCard}>
+        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+          {t('history_detail_breakdown')}
+        </Text>
+        <DonutChart segments={donutSegments} size={130} />
+      </GlassCard>
 
       {/* ── Metrics ───────────────────────────────────────────────────────── */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -206,6 +227,9 @@ const styles = StyleSheet.create({
     borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
   },
   recoText: { fontSize: 11, fontWeight: '700' },
+
+  // Donut
+  donutCard: { padding: 16, gap: 12 },
 
   // Metrics
   metricsGrid: {

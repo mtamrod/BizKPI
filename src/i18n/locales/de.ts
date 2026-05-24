@@ -217,6 +217,7 @@ export default {
   history_csv_customers: 'Kunden',
   history_csv_avg_ticket: 'Ø Bestellwert',
   history_csv_reco: 'KI-Empfehlung',
+  history_detail_breakdown: 'Umsatzverteilung',
   history_detail_metrics: 'Kennzahlen',
   history_detail_no_reco: 'Keine Empfehlung für diese Woche',
 } as const;

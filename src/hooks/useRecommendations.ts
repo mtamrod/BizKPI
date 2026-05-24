@@ -1,3 +1,17 @@
+/**
+ * @file useRecommendations.ts
+ * @description Hook that manages the AI recommendations feature.
+ *
+ * Responsibilities:
+ * - Loads the list of week periods that have business data (available for analysis)
+ * - Loads any already-generated recommendations (avoids redundant AI calls)
+ * - Tracks which periods are currently being processed by the AI (`generatingIds`)
+ * - Exposes `generate` (calls the AI) and `remove` (deletes a recommendation)
+ *
+ * State is managed with `useReducer` to keep async transitions predictable and
+ * testable without an external state library.
+ */
+
 import { useCallback, useEffect, useReducer } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { useTheme } from '@/theme/ThemeContext';
@@ -13,9 +27,9 @@ import type { AsyncStatus } from '@/types';
 interface State {
   /** Week periods that have at least one business_data record, newest first. */
   periods: PeriodRead[];
-  /** period_id → Recommendation (already generated ones). */
+  /** Keyed by `period_id` — recommendations that have already been generated. */
   recommendations: Record<string, Recommendation>;
-  /** period_ids currently being sent to the AI. */
+  /** IDs of periods whose recommendation is currently being generated. */
   generatingIds: string[];
   loadStatus: AsyncStatus;
   error: string | null;
@@ -25,10 +39,10 @@ type Action =
   | { type: 'LOAD_START' }
   | { type: 'LOAD_SUCCESS'; periods: PeriodRead[]; recommendations: Record<string, Recommendation> }
   | { type: 'LOAD_ERROR'; error: string }
-  | { type: 'GENERATE_START'; periodId: string }
+  | { type: 'GENERATE_START';   periodId: string }
   | { type: 'GENERATE_SUCCESS'; periodId: string; recommendation: Recommendation }
-  | { type: 'GENERATE_ERROR'; periodId: string }
-  | { type: 'REMOVE_SUCCESS'; periodId: string };
+  | { type: 'GENERATE_ERROR';   periodId: string }
+  | { type: 'REMOVE_SUCCESS';   periodId: string };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -71,6 +85,18 @@ function reducer(state: State, action: Action): State {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Provides all data and actions needed by the Recommendations screen.
+ *
+ * @returns
+ * - `periods`        — Selectable week periods (have business data)
+ * - `recommendations`— Map of `period_id → Recommendation` (already generated)
+ * - `generatingIds`  — Period IDs currently awaiting the AI response
+ * - `loadStatus`     — Overall loading status of the initial data fetch
+ * - `generate`       — Triggers AI generation for a period; re-throws on error
+ * - `remove`         — Deletes the recommendation for a period from API + local state
+ * - `refresh`        — Re-fetches periods and recommendations
+ */
 export function useRecommendations() {
   const { language } = useTheme();
   const [state, dispatch] = useReducer(reducer, {
@@ -84,6 +110,7 @@ export function useRecommendations() {
   const load = useCallback(async () => {
     dispatch({ type: 'LOAD_START' });
     try {
+      // Fetch periods, business data presence, and existing recommendations in parallel
       const [periods, bdata, recos] = await Promise.all([
         periodService.list(),
         apiClient.get<{ period_id: string }[]>('/business-data/'),
@@ -107,6 +134,17 @@ export function useRecommendations() {
 
   useEffect(() => { load(); }, [load]);
 
+  /**
+   * Requests AI generation for the given period. The `language` from the
+   * active theme is passed to the backend so the recommendation text is
+   * returned in the user's selected language.
+   *
+   * Marks the period as `generating` while the request is in flight, and
+   * updates the local recommendations map on success.
+   * Re-throws the error so the UI can display an appropriate alert.
+   *
+   * @param periodId - UUID of the period to analyse
+   */
   const generate = useCallback(async (periodId: string) => {
     dispatch({ type: 'GENERATE_START', periodId });
     try {
@@ -119,6 +157,12 @@ export function useRecommendations() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
+  /**
+   * Deletes the recommendation for a period from the API and removes it from
+   * local state so the UI reflects the change immediately.
+   *
+   * @param periodId - UUID of the period whose recommendation to delete
+   */
   const remove = useCallback(async (periodId: string) => {
     await recommendationService.delete(periodId);
     dispatch({ type: 'REMOVE_SUCCESS', periodId });

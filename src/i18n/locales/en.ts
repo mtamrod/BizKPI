@@ -217,6 +217,7 @@ export default {
   history_csv_customers: 'Customers',
   history_csv_avg_ticket: 'Avg. ticket',
   history_csv_reco: 'AI Recommendation',
+  history_detail_breakdown: 'Revenue breakdown',
   history_detail_metrics: 'Metrics',
   history_detail_no_reco: 'No recommendation for this week',
 } as const;
