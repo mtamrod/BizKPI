@@ -103,6 +103,7 @@ export default {
   reco_actions: 'Recommended actions',
   reco_forecast: 'Next week forecast',
   week_abbr: 'W',
+  badge_ai: 'AI',
   reco_regenerate: 'Regenerate recommendations',
   reco_delete: 'Delete recommendations',
   reco_delete_title: 'Delete recommendations',
@@ -216,4 +217,6 @@ export default {
   history_csv_customers: 'Customers',
   history_csv_avg_ticket: 'Avg. ticket',
   history_csv_reco: 'AI Recommendation',
+  history_detail_metrics: 'Metrics',
+  history_detail_no_reco: 'No recommendation for this week',
 } as const;

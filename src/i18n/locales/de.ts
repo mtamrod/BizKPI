@@ -103,6 +103,7 @@ export default {
   reco_actions: 'Empfohlene Maßnahmen',
   reco_forecast: 'Prognose nächste Woche',
   week_abbr: 'W',
+  badge_ai: 'KI',
   reco_regenerate: 'Empfehlungen neu generieren',
   reco_delete: 'Empfehlungen löschen',
   reco_delete_title: 'Empfehlungen löschen',
@@ -216,4 +217,6 @@ export default {
   history_csv_customers: 'Kunden',
   history_csv_avg_ticket: 'Ø Bestellwert',
   history_csv_reco: 'KI-Empfehlung',
+  history_detail_metrics: 'Kennzahlen',
+  history_detail_no_reco: 'Keine Empfehlung für diese Woche',
 } as const;
