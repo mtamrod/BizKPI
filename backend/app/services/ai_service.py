@@ -105,13 +105,20 @@ def _build_user_prompt(
     revenue = kpi.get("revenue", 0) or 0
 
     if bdata.get("top_product_name"):
-        top_rev = bdata.get("top_product_revenue") or 0
-        pct_line = ""
-        if revenue > 0:
-            pct_line = f" — representa el {top_rev / revenue * 100:.1f}% de los ingresos"
-        optional_lines.append(
-            f"- Producto/servicio estrella: {bdata['top_product_name']} ({top_rev:.2f} €{pct_line})"
-        )
+        top_rev = bdata.get("top_product_revenue")
+        if top_rev:
+            # El usuario proporcionó también el ingreso del producto → mostrarlo con contexto
+            pct_line = ""
+            if revenue > 0:
+                pct_line = f" — representa el {top_rev / revenue * 100:.1f}% de los ingresos"
+            optional_lines.append(
+                f"- Producto/servicio estrella: {bdata['top_product_name']} ({top_rev:.2f} €{pct_line})"
+            )
+        else:
+            # Solo nombre, sin revenue → no inventar "0 €" que confundiría al modelo
+            optional_lines.append(
+                f"- Producto/servicio estrella: {bdata['top_product_name']}"
+            )
 
     if bdata.get("marketing_expenses") is not None:
         mkt = bdata["marketing_expenses"]
