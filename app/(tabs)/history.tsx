@@ -5,11 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Header } from '@/components/layout/Header';
 import { GlassCard } from '@/components/ui/GlassCard';
+import { ExportModal } from '@/components/ui/ExportModal';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useHistory, type HistoryEntry } from '@/hooks/useHistory';
 import { fmt } from '@/utils/formatters';
 import { formatPeriodRange, isoWeekNumber } from '@/utils/periodHelpers';
+import { exportHistoryCSV } from '@/utils/csvExporter';
 import type { ThemeColors } from '@/types';
 
 // ─── Metric cell ──────────────────────────────────────────────────────────────
@@ -29,7 +31,8 @@ export default function HistoryScreen() {
   const { colors, currency, language } = useTheme();
   const { t } = useTranslation();
   const { entries, status, refresh, remove } = useHistory();
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [showExport, setShowExport]   = useState(false);
 
   const handleDelete = useCallback((entry: HistoryEntry) => {
     const weekBadge = `${t('week_abbr')}${isoWeekNumber(entry.period.start_date)}`;
@@ -59,9 +62,37 @@ export default function HistoryScreen() {
 
   const isLoading = status === 'idle' || status === 'loading';
 
+  const handleExport = useCallback(async (filtered: HistoryEntry[]) => {
+    try {
+      await exportHistoryCSV(filtered);
+    } catch (err) {
+      console.error('[Export]', err);
+      Alert.alert('Error', String(err));
+    }
+  }, [t]);
+
   return (
     <ScreenWrapper onRefresh={handleRefresh} refreshing={refreshing}>
-      <Header title={t('history_title')} subtitle={t('history_subtitle')} />
+      <Header
+        title={t('history_title')}
+        subtitle={t('history_subtitle')}
+        right={
+          entries.length > 0
+            ? (
+              <TouchableOpacity onPress={() => setShowExport(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="download-outline" size={22} color={colors.primaryLight} />
+              </TouchableOpacity>
+            )
+            : null
+        }
+      />
+
+      <ExportModal
+        visible={showExport}
+        entries={entries}
+        onClose={() => setShowExport(false)}
+        onExport={handleExport}
+      />
 
       {/* ── Loading ──────────────────────────────────────────────────────── */}
       {isLoading && (
