@@ -1,3 +1,21 @@
+/**
+ * @file history/index.tsx
+ * @description Pantalla de lista del Historial — primer nivel del stack navigator.
+ *
+ * Muestra todas las semanas registradas como tarjetas navegables ordenadas de
+ * más reciente a más antigua. Cada tarjeta muestra:
+ * - Badge de número de semana ISO (Sxx)
+ * - Rango de fechas (lun DD/MM – dom DD/MM/AAAA)
+ * - Badge "IA" si existe una recomendación generada para esa semana
+ *
+ * Funcionalidades:
+ * - Pull-to-refresh mediante `useHistory`
+ * - Exportación a CSV con filtro de rango de fechas vía `ExportModal`
+ * - Navegación al detalle pasando la entrada completa como parámetro JSON
+ *   para evitar una segunda llamada a la API en la pantalla de detalle
+ * - Estado de carga pantalla completa (mientras no hay datos)
+ * - Estado vacío si no se han registrado semanas
+ */
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';

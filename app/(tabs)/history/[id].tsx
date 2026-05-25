@@ -1,3 +1,25 @@
+/**
+ * @file history/[id].tsx
+ * @description Pantalla de detalle de una semana del Historial — segundo nivel del stack.
+ *
+ * Recibe la entrada completa (`HistoryEntry`) serializada como JSON en los
+ * parámetros de navegación, evitando así llamadas adicionales a la API.
+ *
+ * Muestra:
+ * - Barra de navegación personalizada con botón ← (volver) y 🗑 (borrar)
+ * - Badge de semana ISO y rango de fechas del periodo
+ * - Gráfico de donut con la distribución beneficio / gastos
+ * - Grid de 7 métricas: ingresos, gastos, beneficio, margen, ventas,
+ *   clientes y ticket medio
+ *
+ * Borrado:
+ * - Muestra un `Alert` de confirmación antes de borrar
+ * - Elimina el registro `business_data` y su recomendación de IA asociada
+ * - Navega automáticamente de vuelta a la lista tras el borrado
+ *
+ * @param params.id    - ID del período (string)
+ * @param params.entry - JSON del objeto `HistoryEntry` completo
+ */
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
