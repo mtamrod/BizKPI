@@ -1,60 +1,158 @@
-# BizTrack — Plataforma de Business Intelligence para PYMEs
+<div align="center">
 
-Aplicación móvil multiplataforma (iOS / Android) que permite a pequeños y medianos negocios registrar sus datos operativos semanales, visualizar KPIs en tiempo real y obtener recomendaciones de mejora generadas por inteligencia artificial.
+# BizTrack
 
-Desarrollado como Trabajo de Fin de Grado (TFG).
+### Plataforma de Business Intelligence para pequeños negocios
+
+*Registro semanal de KPIs · Análisis con IA · Historial exportable*
+
+![React Native](https://img.shields.io/badge/React_Native-0.76-61DAFB?logo=react&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo_SDK-54-000020?logo=expo&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)
+
+</div>
 
 ---
 
-## Características principales
+## Tabla de contenidos
 
-- **Dashboard de KPIs** — ingresos, clientes, margen neto y ventas con tendencias comparadas a la semana anterior
-- **Registro semanal** — formulario guiado para capturar datos del período (ingresos, gastos, ventas, clientes, producto estrella)
-- **Recomendaciones IA** — análisis generado por LLM con resumen, puntos clave, acciones concretas y previsión de la próxima semana
-- **Historial navegable** — listado de todas las semanas registradas con detalle de métricas y gráfico de distribución
-- **Exportación CSV** — exportación del historial con filtro de rango de fechas
-- **Multiidioma** — español, inglés, francés, portugués, italiano y alemán
-- **Multidivisa** — EUR, USD, GBP, JPY
-- **Temas claro / oscuro**
+1. [Descripción](#descripción)
+2. [Características](#características)
+3. [Arquitectura](#arquitectura)
+4. [Stack tecnológico](#stack-tecnológico)
+5. [Estructura del proyecto](#estructura-del-proyecto)
+6. [Esquema de base de datos](#esquema-de-base-de-datos)
+7. [API REST](#api-rest)
+8. [Inteligencia artificial](#inteligencia-artificial)
+9. [Puesta en marcha](#puesta-en-marcha)
+10. [Tests](#tests)
+11. [Despliegue en Render](#despliegue-en-render)
+12. [Comandos útiles](#comandos-útiles)
+
+---
+
+## Descripción
+
+BizTrack es una aplicación móvil multiplataforma (iOS / Android) orientada a propietarios de pequeños negocios — bares, restaurantes, tiendas locales, talleres, peluquerías — que necesitan entender la salud financiera de su negocio sin depender de herramientas complejas ni contratar a un analista.
+
+El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos, ventas, clientes). La app calcula automáticamente los KPIs más relevantes, los visualiza en un dashboard interactivo y, bajo demanda, envía los datos a un modelo de lenguaje que genera recomendaciones concretas y accionables adaptadas al tipo de negocio y al período analizado.
+
+> Desarrollado como Trabajo de Fin de Grado (TFG).
+
+---
+
+## Características
+
+| Módulo | Descripción |
+|--------|-------------|
+| **Dashboard** | KPIs en tiempo real: ingresos, clientes, margen neto y número de ventas, cada uno con su tendencia respecto a la semana anterior. Gráfico de línea de ingresos (6 semanas), gráfico de barras semanal y donut de distribución de categorías. |
+| **Registro de datos** | Formulario guiado con campos obligatorios (ingresos, gastos, ventas, clientes) y opcionales (producto estrella, mejor/peor día, observaciones). Selector de semana con validación de período ya existente y posibilidad de reemplazar. |
+| **Recomendaciones IA** | Análisis generado por GPT-4o-mini a partir de los KPIs del período. Devuelve: resumen ejecutivo, hasta 3 puntos clave (positivos / negativos / neutros), hasta 4 acciones concretas con prioridad y área, y previsión para la semana siguiente. |
+| **Historial** | Lista navegable de todas las semanas registradas. Pantalla de detalle con gráfico de distribución beneficio/gastos y grid de 7 métricas. Eliminación de registros con confirmación. |
+| **Exportación CSV** | Descarga del historial completo o de un rango de fechas seleccionado, con columnas de KPIs calculados e indicación de si existe recomendación IA. |
+| **Perfil y preferencias** | Cambio de nombre del negocio, tema (claro/oscuro), moneda de visualización (EUR / USD / GBP / JPY) y idioma de la interfaz. Cambio de contraseña en la propia app. |
+| **Multiidioma** | Español, inglés, francés, portugués, italiano y alemán. Las recomendaciones de IA también se generan en el idioma activo del usuario. |
+
+---
+
+## Arquitectura
+
+### Diagrama general
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    App móvil (Expo)                      │
+│                                                         │
+│  ┌──────────┐  ┌──────────┐  ┌─────────┐  ┌─────────┐  │
+│  │Dashboard │  │  Datos   │  │   IA    │  │Historial│  │
+│  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬────┘  │
+│       └─────────────┴─────────────┴─────────────┘       │
+│                       apiClient (Axios + JWT)            │
+└───────────────────────────┬─────────────────────────────┘
+                            │ HTTPS
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                  FastAPI  (Render)                       │
+│                                                         │
+│  /periods  /business-data  /kpis  /recommendations      │
+│                    /users  /health                       │
+│                                                         │
+│  ┌────────────────┐    ┌──────────────────────────────┐  │
+│  │  kpi_service   │    │        ai_service            │  │
+│  │  (cálculo puro)│    │  (prompt builder + OpenAI)   │  │
+│  └────────┬───────┘    └──────────────┬───────────────┘  │
+└───────────┼───────────────────────────┼─────────────────┘
+            │                           │
+            ▼                           ▼
+┌───────────────────────┐   ┌───────────────────────────┐
+│  Supabase (PostgreSQL) │   │  OpenRouter / GPT-4o-mini  │
+│  - user_profiles       │   │                           │
+│  - periods             │   │  Prompt en idioma activo  │
+│  - business_data       │   │  → JSON estructurado      │
+│  - kpis                │   │                           │
+│  - ai_recommendations  │   └───────────────────────────┘
+└───────────────────────┘
+```
+
+### Arquitectura de navegación (expo-router)
+
+```
+app/
+├── (auth)/
+│   ├── _layout.tsx          Stack de autenticación
+│   ├── login.tsx            Inicio de sesión
+│   └── register.tsx         Registro de cuenta
+│
+└── (tabs)/
+    ├── _layout.tsx          Tab bar principal (5 pestañas)
+    ├── index.tsx            Dashboard de KPIs
+    ├── data.tsx             Formulario de registro semanal
+    ├── recommendations.tsx  Recomendaciones IA por semana
+    ├── profile.tsx          Perfil y preferencias
+    └── history/
+        ├── _layout.tsx      Stack anidado dentro del tab
+        ├── index.tsx        Lista de semanas registradas
+        └── [id].tsx         Detalle de una semana concreta
+```
 
 ---
 
 ## Stack tecnológico
 
-### Frontend (móvil)
-| Tecnología | Versión | Uso |
+### Frontend
+
+| Tecnología | Versión | Rol |
 |---|---|---|
-| React Native | 0.76 | Base de la app |
-| Expo SDK | 54 | Toolchain y APIs nativas |
-| expo-router | 4 | Navegación (tabs + stack) |
-| TypeScript | 5 | Tipado estático |
-| react-i18next | — | Internacionalización |
+| React Native | 0.76 | Base de la aplicación móvil |
+| Expo SDK | 54 | Toolchain, builds y APIs nativas |
+| expo-router | 4 | Navegación basada en ficheros (tabs + stack) |
+| TypeScript | 5 | Tipado estático en todo el proyecto |
+| react-i18next | latest | Internacionalización (6 idiomas) |
+| Axios | latest | Cliente HTTP con interceptores JWT |
+| AsyncStorage | latest | Persistencia local de sesión y preferencias |
 
-### Backend (API REST)
-| Tecnología | Versión | Uso |
+### Backend
+
+| Tecnología | Versión | Rol |
 |---|---|---|
-| Python | 3.11 | Runtime |
-| FastAPI | — | Framework HTTP |
-| Supabase | — | Base de datos (PostgreSQL) + autenticación |
-| OpenRouter | — | Acceso a modelos LLM (vía API OpenAI-compatible) |
+| Python | 3.11 | Runtime del servidor |
+| FastAPI | 0.115 | Framework HTTP asíncrono |
+| Pydantic v2 | 2.11 | Validación de modelos y settings |
+| Supabase Python SDK | ≥2.15 | Cliente de base de datos y auth |
+| OpenAI SDK | 1.54 | Llamadas al LLM vía OpenRouter |
+| python-jose / PyJWT | latest | Verificación de tokens JWT (ES256 + HS256) |
+| uvicorn | 0.32 | Servidor ASGI |
 
----
+### Servicios externos
 
-## Arquitectura de navegación
-
-```
-app/
-├── (auth)/          ← Stack de autenticación (login / registro)
-└── (tabs)/          ← Tabs principales (autenticadas)
-    ├── index.tsx        → Dashboard
-    ├── data.tsx         → Añadir / editar datos semanales
-    ├── recommendations.tsx → Recomendaciones IA por semana
-    ├── profile.tsx      → Perfil y preferencias
-    └── history/         ← Stack anidado
-        ├── _layout.tsx      → Stack navigator del historial
-        ├── index.tsx        → Lista de semanas
-        └── [id].tsx         → Detalle de una semana
-```
+| Servicio | Uso |
+|---|---|
+| **Supabase** | Base de datos PostgreSQL gestionada + autenticación de usuarios (JWT) |
+| **OpenRouter** | Gateway de acceso a modelos LLM con API compatible con OpenAI |
+| **Render** | Hosting del backend FastAPI (PaaS, deploy automático desde Git) |
 
 ---
 
@@ -62,180 +160,402 @@ app/
 
 ```
 TFG-1.0/
-├── app/                    # Pantallas (expo-router)
+│
+├── app/                          # Pantallas (expo-router)
+│   ├── (auth)/                   # Flujo de autenticación
+│   └── (tabs)/                   # Navegación principal
+│       └── history/              # Stack anidado del historial
+│
 ├── src/
 │   ├── components/
-│   │   ├── charts/         # LineChart, BarChart, DonutChart
-│   │   ├── layout/         # ScreenWrapper, Header, AppBackground
-│   │   └── ui/             # Button, GlassCard, Input, Badge, RecoBody…
-│   ├── hooks/              # useKPIs, useDataEntries, useRecommendations, useHistory
-│   ├── lib/                # apiClient (wrapper Axios con auth)
-│   ├── mocks/              # Datos semilla para desarrollo
-│   ├── services/           # authService, kpiService, recommendationService…
-│   ├── store/              # AuthContext
-│   ├── theme/              # ThemeContext, colores, tipografía
-│   ├── types/              # Tipos globales (DataEntry, KpiMetric, AsyncStatus…)
-│   ├── utils/              # formatters.ts, periodHelpers.ts, storage.ts
-│   └── __tests__/          # Tests unitarios Jest
-└── backend/
-    ├── app/
-    │   ├── routers/        # Endpoints FastAPI
-    │   └── services/       # kpi_service, ai_service, auth_service
-    └── tests/              # Tests unitarios pytest
+│   │   ├── charts/               # LineChart, BarChart, DonutChart
+│   │   ├── layout/               # ScreenWrapper, Header, AppBackground
+│   │   └── ui/                   # Button, GlassCard, Input, Badge,
+│   │                             # RecoBody, ExportModal, Loader…
+│   ├── hooks/
+│   │   ├── useKPIs.ts            # Datos del dashboard
+│   │   ├── useDataEntries.ts     # CRUD de registros semanales
+│   │   ├── useRecommendations.ts # Gestión de recomendaciones IA
+│   │   └── useHistory.ts         # Historial con estado optimista
+│   ├── lib/
+│   │   └── apiClient.ts          # Axios + interceptor JWT automático
+│   ├── mocks/                    # Datos semilla para desarrollo
+│   ├── services/                 # Capa de acceso a la API
+│   │   ├── authService.ts
+│   │   ├── dataEntryService.ts
+│   │   ├── kpiService.ts
+│   │   ├── periodService.ts
+│   │   ├── recommendationService.ts
+│   │   └── userService.ts
+│   ├── store/
+│   │   └── AuthContext.tsx        # Estado global de autenticación
+│   ├── theme/
+│   │   └── ThemeContext.tsx       # Tema, moneda e idioma globales
+│   ├── types/
+│   │   └── index.ts              # Tipos globales (DataEntry, KpiMetric…)
+│   ├── utils/
+│   │   ├── formatters.ts         # fmt.currency, .percent, .date…
+│   │   ├── periodHelpers.ts      # ISO weeks, rangos de fechas
+│   │   ├── csvExporter.ts        # Exportación a CSV
+│   │   └── storage.ts            # Wrapper AsyncStorage tipado
+│   └── __tests__/                # Tests unitarios Jest
+│
+├── backend/
+│   ├── app/
+│   │   ├── core/                 # Config, clientes Supabase / OpenAI
+│   │   ├── dependencies/         # Inyección de dependencias (auth)
+│   │   ├── models/               # Schemas Pydantic
+│   │   ├── routers/              # Endpoints FastAPI
+│   │   └── services/
+│   │       ├── kpi_service.py    # Cálculo de KPIs (aritmética pura)
+│   │       └── ai_service.py     # Builder de prompts + llamada LLM
+│   ├── supabase/
+│   │   └── migrations/           # SQL del esquema inicial
+│   ├── tests/                    # Tests unitarios pytest
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   ├── runtime.txt               # Python 3.11.9
+│   └── Procfile                  # Comando de arranque para Render
+│
+├── render.yaml                   # Configuración de despliegue (IaC)
+└── README.md
 ```
+
+---
+
+## Esquema de base de datos
+
+```
+auth.users  (gestionado por Supabase)
+    │
+    ├──▶ user_profiles
+    │       id (FK auth.users) · business_name · business_sector
+    │
+    ├──▶ periods
+    │       id · user_id · period_type · start_date · end_date
+    │       UNIQUE (user_id, start_date, end_date)
+    │
+    │       └──▶ business_data
+    │                id · period_id · user_id
+    │                total_revenue · total_expenses · num_sales · num_customers
+    │                top_product · top_product_revenue · best_day · worst_day
+    │                cost_of_goods_sold · observations
+    │
+    │       └──▶ kpis
+    │                id · period_id · user_id
+    │                revenue · expenses · net_profit · profit_margin
+    │                gross_margin · avg_ticket · num_sales · num_customers
+    │
+    └──▶ ai_recommendations
+             id · period_id · user_id
+             model_used · generated_at
+             recommendations (JSONB) → { summary, highlights[], recommendations[], forecast }
+```
+
+Todas las tablas tienen Row Level Security (RLS) activo — cada usuario solo accede a sus propios datos.
+
+---
+
+## API REST
+
+Base URL: `https://<servicio>.onrender.com/api/v1`  
+Autenticación: `Authorization: Bearer <supabase_jwt>`
+
+### Períodos
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/periods/` | Lista todos los períodos del usuario |
+| `POST` | `/periods/` | Crea un nuevo período |
+| `DELETE` | `/periods/{id}` | Elimina un período y sus datos en cascada |
+
+### Datos de negocio
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/business-data/` | Lista todos los registros |
+| `POST` | `/business-data/` | Crea un registro + calcula y guarda KPIs |
+| `PUT` | `/business-data/{id}` | Actualiza un registro + recalcula KPIs |
+| `DELETE` | `/business-data/{id}` | Elimina un registro |
+
+### KPIs
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/kpis/` | Lista todos los KPIs calculados |
+| `GET` | `/kpis/{period_id}` | KPIs de un período concreto |
+| `POST` | `/kpis/calculate/` | Recalcula KPIs a partir de un business_data |
+
+### Recomendaciones IA
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/recommendations/` | Lista todas las recomendaciones |
+| `GET` | `/recommendations/{period_id}` | Recomendación de un período |
+| `POST` | `/recommendations/generate/` | Genera (o regenera) una recomendación con IA |
+| `DELETE` | `/recommendations/{period_id}` | Elimina una recomendación |
+
+### Usuario y salud
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/users/me` | Perfil del usuario autenticado |
+| `PUT` | `/users/me` | Actualiza nombre del negocio |
+| `GET` | `/health` | Estado del servicio (sin autenticación) |
+
+La documentación interactiva (Swagger UI) está disponible en `/docs` en entorno de desarrollo.
+
+---
+
+## Inteligencia artificial
+
+### Modelo
+GPT-4o-mini vía [OpenRouter](https://openrouter.ai), con API compatible con OpenAI SDK.  
+Se usa el modo asíncrono (`AsyncOpenAI`) para no bloquear el event loop de FastAPI.
+
+### Construcción del prompt
+
+`ai_service.py` construye un prompt con dos partes:
+
+**System prompt** (fijo): define el rol del modelo como asesor de pequeños negocios, establece reglas de tono (directo, cercano, sin jerga corporativa), restricciones de longitud y el formato JSON de salida esperado.
+
+**User prompt** (dinámico): incluye en el idioma activo del usuario:
+- Tipo de período y rango de fechas
+- Sector del negocio (si está disponible)
+- KPIs del período: ingresos, gastos, beneficio, margen, ticket medio, ventas, clientes
+- Producto más vendido con porcentaje sobre ingresos (si existe)
+- Mejor y peor día (si se han introducido)
+- Observaciones libres del propietario (si las hay)
+
+### Estructura de respuesta (JSON)
+
+```json
+{
+  "summary": "Resumen ejecutivo de 2-3 frases",
+  "highlights": [
+    {
+      "type": "positive | negative | neutral",
+      "title": "Título del punto",
+      "description": "Explicación breve"
+    }
+  ],
+  "recommendations": [
+    {
+      "area": "Área del negocio",
+      "priority": "high | medium | low",
+      "action": "Acción concreta",
+      "rationale": "Por qué es importante"
+    }
+  ],
+  "forecast": "Perspectiva para la próxima semana"
+}
+```
+
+Máximo: 3 highlights · 4 recomendaciones.
 
 ---
 
 ## Puesta en marcha
 
 ### Requisitos previos
-- Node.js 18+
-- Python 3.11+
-- Expo Go en el dispositivo móvil (o emulador iOS/Android)
-- Cuenta Supabase con las tablas creadas (ver `backend/supabase/`)
 
-### Variables de entorno
+- [Node.js](https://nodejs.org) 18+
+- [Python](https://python.org) 3.11+
+- [Expo Go](https://expo.dev/go) en el dispositivo móvil (o emulador iOS/Android)
+- Cuenta en [Supabase](https://supabase.com) con el esquema inicial aplicado
+- Cuenta en [OpenRouter](https://openrouter.ai) con créditos disponibles
 
-Crear `.env` en la raíz del proyecto (nunca se sube al repositorio):
+### 1. Clonar el repositorio
 
-```env
-EXPO_PUBLIC_API_URL=http://<IP_LOCAL>:8000
+```bash
+git clone https://github.com/<usuario>/<repo>.git
+cd <repo>
 ```
 
-Crear `.env` en `backend/` (desarrollo local):
+### 2. Configurar el esquema de Supabase
+
+En el **SQL Editor** de tu proyecto Supabase, ejecutar el contenido de:
+
+```
+backend/supabase/migrations/001_initial.sql
+```
+
+Esto crea las tablas, relaciones, índices, políticas RLS y el trigger de creación de perfil automático.
+
+### 3. Variables de entorno
+
+**Frontend** — crear `.env` en la raíz del proyecto:
 
 ```env
+# Desarrollo local (misma red WiFi que el servidor)
+EXPO_PUBLIC_API_URL=http://192.168.x.x:8000
+
+# Producción (tras desplegar en Render)
+# EXPO_PUBLIC_API_URL=https://<servicio>.onrender.com
+```
+
+**Backend** — crear `backend/.env`:
+
+```env
+# Supabase — Project Settings → API
 SUPABASE_URL=https://<proyecto>.supabase.co
 SUPABASE_SERVICE_KEY=<service_role_key>
 SUPABASE_JWT_SECRET=<jwt_secret>
-SUPABASE_JWT_JWK=<jwk_json>
+SUPABASE_JWT_JWK=<jwk_json_string>
+
+# OpenRouter — openrouter.ai/keys
 OPENROUTER_API_KEY=sk-or-...
+
+# Entorno
 APP_ENV=development
 ```
 
-### Frontend
+> ⚠️ Ningún fichero `.env` debe subirse al repositorio. Están incluidos en `.gitignore`.
+
+### 4. Instalar dependencias del frontend
 
 ```bash
-# Instalar dependencias
 npm install
-
-# Arrancar el servidor de desarrollo
-npx expo start
-
-# Escanear el QR con Expo Go o abrir en emulador
 ```
 
-### Backend
+### 5. Instalar dependencias del backend
 
 ```bash
 cd backend
-
-# Crear entorno virtual
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-# Instalar dependencias
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+
 pip install -r requirements.txt
+```
 
-# Arrancar el servidor
+### 6. Arrancar el backend
+
+```bash
+# Desde backend/ con el venv activo
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+Verificar que el servidor responde: `http://localhost:8000/health`  
+Swagger UI disponible en: `http://localhost:8000/docs`
+
+### 7. Arrancar la app
+
+```bash
+# Desde la raíz del proyecto
+npx expo start
+```
+
+Escanear el código QR con Expo Go (asegurarse de que el móvil y el PC están en la misma red WiFi).
 
 ---
 
 ## Tests
 
-### Frontend (Jest)
+### Frontend — Jest
 
 ```bash
-# Ejecutar todos los tests unitarios
+# Todos los tests
 npx jest
 
-# Con cobertura
+# Con informe de cobertura
 npx jest --coverage
+
+# Modo watch (desarrollo)
+npx jest --watch
 ```
 
-Los tests cubren `src/utils/formatters.ts` (33 tests) y `src/utils/periodHelpers.ts` (40 tests).
+| Suite | Fichero | Tests |
+|---|---|---|
+| Formateadores | `src/__tests__/formatters.test.ts` | 33 |
+| Helpers de período | `src/__tests__/periodHelpers.test.ts` | 40 |
+| **Total** | | **73** |
 
-### Backend (pytest)
+### Backend — pytest
 
 ```bash
 cd backend
+
+# Todos los tests
 pytest -v
+
+# Con cobertura
+pytest --cov=app --cov-report=term-missing
 ```
 
-Los tests cubren `app/services/kpi_service.py` (16 tests) y `app/services/ai_service.py` (26 tests).
+| Suite | Fichero | Tests |
+|---|---|---|
+| Servicio de KPIs | `tests/test_kpi_service.py` | 16 |
+| Servicio de IA | `tests/test_ai_service.py` | 26 |
+| **Total** | | **42** |
 
----
-
-## Flujo de datos
-
-```
-Usuario registra datos semanales
-        ↓
-POST /business-data/  →  Supabase (business_data)
-        ↓
-POST /kpis/calculate/ →  kpi_service calcula y guarda KPIs
-        ↓
-[opcional] POST /recommendations/generate/
-        ↓
-ai_service construye prompt con KPIs + datos del período
-        ↓
-OpenRouter (LLM) devuelve JSON estructurado
-        ↓
-Recomendación guardada en Supabase (recommendations)
-        ↓
-App muestra: resumen · puntos clave · acciones · previsión
-```
+**Total global: 115 tests.**
 
 ---
 
 ## Despliegue en Render
 
-El fichero `render.yaml` en la raíz del repositorio define el servicio web listo para conectar con [Render](https://render.com).
+El fichero `render.yaml` en la raíz define el servicio web como código (IaC), listo para conectar con [Render](https://render.com).
 
 ### Pasos
 
-1. **Crear cuenta** en render.com y pulsar **New → Web Service**
-2. **Conectar el repositorio** de GitHub/GitLab con el proyecto
-3. Render detecta `render.yaml` automáticamente — confirmar la configuración:
-   - Runtime: Python
-   - Root Directory: `backend`
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. **Añadir las variables de entorno** en el dashboard de Render (pestaña _Environment_):
+**1.** Crear cuenta en render.com → **New → Web Service**
 
-   | Variable | Dónde obtenerla |
-   |---|---|
-   | `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
-   | `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API → service_role key |
-   | `SUPABASE_JWT_SECRET` | Supabase → Project Settings → API → JWT Secret |
-   | `SUPABASE_JWT_JWK` | Supabase → Project Settings → API → JWT Public Key (JWK) |
-   | `OPENROUTER_API_KEY` | openrouter.ai → Keys |
+**2.** Conectar el repositorio de GitHub y seleccionar este proyecto.  
+Render detecta `render.yaml` automáticamente y pre-rellena la configuración:
+- Root Directory: `backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
-5. Pulsar **Deploy** — Render construye y despliega automáticamente
-6. **Copiar la URL** del servicio (p. ej. `https://bizkpi-api.onrender.com`)
-7. Actualizar `.env` en la raíz del proyecto frontend:
+**3.** Ir a la pestaña **Environment** y añadir las siguientes variables:
 
-   ```env
-   EXPO_PUBLIC_API_URL=https://bizkpi-api.onrender.com
-   ```
+| Variable | Dónde obtenerla |
+|---|---|
+| `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+| `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API → `service_role` secret key |
+| `SUPABASE_JWT_SECRET` | Supabase → Project Settings → API → JWT Secret |
+| `SUPABASE_JWT_JWK` | Supabase → Project Settings → API → JWT Public Key (formato JWK) |
+| `OPENROUTER_API_KEY` | openrouter.ai → Keys |
 
-8. Relanzar la app Expo con `npx expo start --clear`
+**4.** Pulsar **Deploy** — Render construye la imagen e inicia el servicio.
 
-> **Nota — tier gratuito:** en el plan gratuito de Render, el servicio entra en reposo tras 15 minutos de inactividad. La primera petición tras el reposo tarda ~30 s en despertar. Para demos, basta con hacer una petición al endpoint `/health` antes de empezar.
+**5.** Copiar la URL del servicio (p. ej. `https://bizkpi-api.onrender.com`) y actualizar `.env` del frontend:
+
+```env
+EXPO_PUBLIC_API_URL=https://bizkpi-api.onrender.com
+```
+
+**6.** Relanzar Expo con `npx expo start --clear`.
+
+> **Plan gratuito de Render:** el servicio entra en reposo tras 15 minutos sin actividad. La primera petición tarda ~30 s en despertar el contenedor. Para demos, abrir `https://<servicio>.onrender.com/health` unos segundos antes de usar la app.
 
 ---
 
 ## Comandos útiles
 
 ```bash
+# ── Frontend ──────────────────────────────────────────────────
 # Verificar tipos TypeScript
 npx tsc --noEmit
+
+# Limpiar caché de Metro Bundler
+npx expo start --clear
 
 # Lint
 npx expo lint
 
-# Limpiar caché Expo
-npx expo start --clear
+# ── Backend ───────────────────────────────────────────────────
+# Formato de código
+cd backend && black app/ tests/
+
+# Comprobación de tipos
+cd backend && mypy app/
+
+# ── Git ───────────────────────────────────────────────────────
+# Ver historial compacto
+git log --oneline --graph
 ```
