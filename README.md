@@ -102,12 +102,15 @@ Crear `.env` en la raíz del proyecto (nunca se sube al repositorio):
 EXPO_PUBLIC_API_URL=http://<IP_LOCAL>:8000
 ```
 
-Crear `.env` en `backend/`:
+Crear `.env` en `backend/` (desarrollo local):
 
 ```env
 SUPABASE_URL=https://<proyecto>.supabase.co
-SUPABASE_KEY=<service_role_key>
+SUPABASE_SERVICE_KEY=<service_role_key>
+SUPABASE_JWT_SECRET=<jwt_secret>
+SUPABASE_JWT_JWK=<jwk_json>
 OPENROUTER_API_KEY=sk-or-...
+APP_ENV=development
 ```
 
 ### Frontend
@@ -184,6 +187,43 @@ Recomendación guardada en Supabase (recommendations)
         ↓
 App muestra: resumen · puntos clave · acciones · previsión
 ```
+
+---
+
+## Despliegue en Render
+
+El fichero `render.yaml` en la raíz del repositorio define el servicio web listo para conectar con [Render](https://render.com).
+
+### Pasos
+
+1. **Crear cuenta** en render.com y pulsar **New → Web Service**
+2. **Conectar el repositorio** de GitHub/GitLab con el proyecto
+3. Render detecta `render.yaml` automáticamente — confirmar la configuración:
+   - Runtime: Python
+   - Root Directory: `backend`
+   - Build Command: `pip install -r requirements.txt`
+   - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+4. **Añadir las variables de entorno** en el dashboard de Render (pestaña _Environment_):
+
+   | Variable | Dónde obtenerla |
+   |---|---|
+   | `SUPABASE_URL` | Supabase → Project Settings → API → Project URL |
+   | `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API → service_role key |
+   | `SUPABASE_JWT_SECRET` | Supabase → Project Settings → API → JWT Secret |
+   | `SUPABASE_JWT_JWK` | Supabase → Project Settings → API → JWT Public Key (JWK) |
+   | `OPENROUTER_API_KEY` | openrouter.ai → Keys |
+
+5. Pulsar **Deploy** — Render construye y despliega automáticamente
+6. **Copiar la URL** del servicio (p. ej. `https://bizkpi-api.onrender.com`)
+7. Actualizar `.env` en la raíz del proyecto frontend:
+
+   ```env
+   EXPO_PUBLIC_API_URL=https://bizkpi-api.onrender.com
+   ```
+
+8. Relanzar la app Expo con `npx expo start --clear`
+
+> **Nota — tier gratuito:** en el plan gratuito de Render, el servicio entra en reposo tras 15 minutos de inactividad. La primera petición tras el reposo tarda ~30 s en despertar. Para demos, basta con hacer una petición al endpoint `/health` antes de empezar.
 
 ---
 
