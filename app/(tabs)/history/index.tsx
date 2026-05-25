@@ -41,6 +41,18 @@ export default function HistoryScreen() {
 
   const isLoading = status === 'idle' || status === 'loading';
 
+  // ── Loading state (pantalla completa, igual que Home e IA) ──
+  if (isLoading && entries.length === 0) {
+    return (
+      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
+          {t('history_loading')}
+        </Text>
+      </ScreenWrapper>
+    );
+  }
+
   return (
     <ScreenWrapper onRefresh={handleRefresh} refreshing={refreshing}>
       <Header
@@ -66,13 +78,6 @@ export default function HistoryScreen() {
         onClose={() => setShowExport(false)}
         onExport={handleExport}
       />
-
-      {/* ── Loading ──────────────────────────────────────────────────────── */}
-      {isLoading && (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primaryLight} size="large" />
-        </View>
-      )}
 
       {/* ── Empty ────────────────────────────────────────────────────────── */}
       {!isLoading && entries.length === 0 && (
@@ -129,7 +134,8 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  center:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
+  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 14 },
   emptyCard:  { alignItems: 'center', gap: 10, padding: 32 },
   emptyTitle: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
   emptyMsg:   { fontSize: 13, textAlign: 'center', lineHeight: 20 },

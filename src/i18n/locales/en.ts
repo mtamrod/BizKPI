@@ -92,6 +92,7 @@ export default {
   reco_subtitle: 'Weekly AI analysis',
   reco_select_week: 'Select a week',
   reco_loading: 'Loading weeks…',
+  history_loading: 'Loading history…',
   reco_no_weeks_title: 'No weeks recorded',
   reco_no_weeks_msg: 'Add data in the Data tab to generate recommendations.',
   reco_no_selection_title: 'Select a week',

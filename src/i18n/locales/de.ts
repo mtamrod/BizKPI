@@ -92,6 +92,7 @@ export default {
   reco_subtitle: 'Wöchentliche KI-Analyse',
   reco_select_week: 'Woche auswählen',
   reco_loading: 'Wochen laden…',
+  history_loading: 'Verlauf wird geladen…',
   reco_no_weeks_title: 'Keine Wochen erfasst',
   reco_no_weeks_msg: 'Fügen Sie Daten im Tab Daten hinzu, um Empfehlungen zu generieren.',
   reco_no_selection_title: 'Woche auswählen',

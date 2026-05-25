@@ -92,6 +92,7 @@ export default {
   reco_subtitle: 'Análise semanal com IA',
   reco_select_week: 'Selecione uma semana',
   reco_loading: 'Carregando semanas…',
+  history_loading: 'Carregando histórico…',
   reco_no_weeks_title: 'Nenhuma semana registrada',
   reco_no_weeks_msg: 'Adicione dados na aba Dados para gerar recomendações.',
   reco_no_selection_title: 'Selecione uma semana',
