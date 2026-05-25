@@ -17,8 +17,8 @@ export default function LoginScreen() {
   const { t } = useTranslation();
 
   const [mode, setMode]               = useState<Mode>('login');
-  const [email, setEmail]             = useState('demo@bizkpi.com');
-  const [password, setPassword]       = useState('BizKPI2024');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
   const [businessName, setBusinessName] = useState('');
   const [rememberMe, setRememberMe]   = useState(true);
   const [localError, setLocalError]   = useState('');
