@@ -1,6 +1,6 @@
 <div align="center">
 
-# BizTrack
+# BizKPI
 
 ### Plataforma de Business Intelligence para pequeños negocios
 
@@ -36,7 +36,7 @@
 
 ## Descripción
 
-BizTrack es una aplicación móvil multiplataforma (iOS / Android) orientada a propietarios de pequeños negocios — bares, restaurantes, tiendas locales, talleres, peluquerías — que necesitan entender la salud financiera de su negocio sin depender de herramientas complejas ni contratar a un analista.
+BizKPI es una aplicación móvil multiplataforma (iOS / Android) orientada a propietarios de pequeños negocios — bares, restaurantes, tiendas locales, talleres, peluquerías — que necesitan entender la salud financiera de su negocio sin depender de herramientas complejas ni contratar a un analista.
 
 El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos, ventas, clientes). La app calcula automáticamente los KPIs más relevantes, los visualiza en un dashboard interactivo y, bajo demanda, envía los datos a un modelo de lenguaje que genera recomendaciones concretas y accionables adaptadas al tipo de negocio y al período analizado.
 
