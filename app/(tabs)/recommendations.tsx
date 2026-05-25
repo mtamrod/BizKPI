@@ -143,20 +143,23 @@ export default function RecommendationsScreen() {
   // ── Error state ──
   if (loadStatus === 'error') {
     return (
-      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
-        <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
-        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-          {t('dashboard_error_title')}
-        </Text>
-        <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-          {t('dashboard_error_msg')}
-        </Text>
-        <TouchableOpacity
-          onPress={refresh}
-          style={[styles.retryBtn, { backgroundColor: colors.primary }]}
-        >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
-        </TouchableOpacity>
+      <ScreenWrapper scrollable={false}>
+        <Header title={t('reco_title')} subtitle={t('reco_subtitle')} />
+        <View style={styles.centered}>
+          <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+            {t('dashboard_error_title')}
+          </Text>
+          <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
+            {t('dashboard_error_msg')}
+          </Text>
+          <TouchableOpacity
+            onPress={refresh}
+            style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+          >
+            <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
+          </TouchableOpacity>
+        </View>
       </ScreenWrapper>
     );
   }
@@ -164,9 +167,12 @@ export default function RecommendationsScreen() {
   // ── Loading state ──
   if (loadStatus === 'loading' && !periods.length) {
     return (
-      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('reco_loading')}</Text>
+      <ScreenWrapper scrollable={false}>
+        <Header title={t('reco_title')} subtitle={t('reco_subtitle')} />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('reco_loading')}</Text>
+        </View>
       </ScreenWrapper>
     );
   }
@@ -174,12 +180,15 @@ export default function RecommendationsScreen() {
   // ── No data state ──
   if (loadStatus === 'success' && !periods.length) {
     return (
-      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
-        <Ionicons name="bar-chart-outline" size={44} color={colors.textSecondary} />
-        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('reco_no_weeks_title')}</Text>
-        <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
-          {t('reco_no_weeks_msg')}
-        </Text>
+      <ScreenWrapper scrollable={false}>
+        <Header title={t('reco_title')} subtitle={t('reco_subtitle')} />
+        <View style={styles.centered}>
+          <Ionicons name="bar-chart-outline" size={44} color={colors.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>{t('reco_no_weeks_title')}</Text>
+          <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
+            {t('reco_no_weeks_msg')}
+          </Text>
+        </View>
       </ScreenWrapper>
     );
   }
