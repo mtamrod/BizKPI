@@ -231,6 +231,15 @@ const styles = StyleSheet.create({
   // Donut
   donutCard: { padding: 16, gap: 12 },
 
+  // Section title
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+
   // Metrics
   metricsGrid: {
     flexDirection: 'row',

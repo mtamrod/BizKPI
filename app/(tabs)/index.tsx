@@ -59,7 +59,7 @@ export default function DashboardScreen() {
     );
   }
 
-  if (status === 'loading' || !data) {
+  if (!data) {
     return (
       <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
