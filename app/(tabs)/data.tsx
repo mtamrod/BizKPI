@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -219,6 +220,27 @@ export default function DataScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [periodStart, periodEnd, revenue, expenses, sales, clients,
       bestProduct, bestDay, worstDay, observations, entries, addEntry, replaceEntry]);
+
+  // ── Error state ──
+  if (status === 'error' && entries.length === 0) {
+    return (
+      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
+        <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+        <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>
+          {t('dashboard_error_title')}
+        </Text>
+        <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
+          {t('dashboard_error_msg')}
+        </Text>
+        <TouchableOpacity
+          onPress={refresh}
+          style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
+        </TouchableOpacity>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper keyboardAware onRefresh={refresh} refreshing={status === 'loading'}>
@@ -564,6 +586,30 @@ const sc = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
+  // ── Error / retry ──
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorMsg: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
   // ── Stats card ──
   statsCard: {
     padding: 18,

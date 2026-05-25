@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import {
+  ActivityIndicator,
   Alert,
   StyleSheet,
   Text,
@@ -34,6 +35,7 @@ export default function ProfileScreen() {
   const { t } = useTranslation();
 
   const [profile, setProfile]             = useState<UserProfile | null>(null);
+  const [loadError, setLoadError]         = useState(false);
   const [editingName, setEditingName]     = useState(false);
   const [newName, setNewName]             = useState('');
   const [saving, setSaving]               = useState(false);
@@ -45,9 +47,14 @@ export default function ProfileScreen() {
   const [passwordSaving, setPasswordSaving]     = useState(false);
 
   const loadProfile = useCallback(async () => {
-    const p = await userService.getProfile();
-    setProfile(p);
-    setNewName(p?.business_name ?? '');
+    setLoadError(false);
+    try {
+      const p = await userService.getProfile();
+      setProfile(p);
+      setNewName(p?.business_name ?? '');
+    } catch {
+      setLoadError(true);
+    }
   }, []);
 
   const handleRefresh = useCallback(async () => {
@@ -114,6 +121,28 @@ export default function ProfileScreen() {
   }, [currentPassword, newPassword, confirmPassword]);
 
   if (!session) return null;
+
+  // ── Error state ──
+  if (loadError && !profile) {
+    return (
+      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
+        <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+        <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>
+          {t('dashboard_error_title')}
+        </Text>
+        <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
+          {t('dashboard_error_msg')}
+        </Text>
+        <TouchableOpacity
+          onPress={loadProfile}
+          style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
+        </TouchableOpacity>
+      </ScreenWrapper>
+    );
+  }
+
   const { user } = session;
   const displayName = profile?.business_name ?? user.name;
 
@@ -372,6 +401,30 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ── Error / retry ──
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  errorTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorMsg: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+
   sectionTitle: {
     fontSize: 12,
     fontWeight: '600',

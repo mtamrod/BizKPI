@@ -140,6 +140,27 @@ export default function RecommendationsScreen() {
     );
   }
 
+  // ── Error state ──
+  if (loadStatus === 'error') {
+    return (
+      <ScreenWrapper scrollable={false} contentStyle={styles.centered}>
+        <Ionicons name="cloud-offline-outline" size={40} color={colors.textSecondary} />
+        <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+          {t('dashboard_error_title')}
+        </Text>
+        <Text style={[styles.hint, { color: colors.textSecondary, textAlign: 'center' }]}>
+          {t('dashboard_error_msg')}
+        </Text>
+        <TouchableOpacity
+          onPress={refresh}
+          style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('dashboard_retry')}</Text>
+        </TouchableOpacity>
+      </ScreenWrapper>
+    );
+  }
+
   // ── Loading state ──
   if (loadStatus === 'loading' && !periods.length) {
     return (
@@ -260,6 +281,14 @@ export default function RecommendationsScreen() {
 const styles = StyleSheet.create({
   centered: {
     flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12,
+  },
+
+  // ── Error / retry ──
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
 
   // ── Period selector ──
