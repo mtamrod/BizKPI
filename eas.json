@@ -14,6 +14,11 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://bizkpi.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://qhzwcqdfqpoaojuvgbab.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoendjcWRmcXBvYW9qdXZnYmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MTY1OTIsImV4cCI6MjA5Mjk5MjU5Mn0.oWuNE7AVa_UN27jBVywFyq2nq7JP5I7jumGRkrZqqNo"
       }
     },
     "production": {
