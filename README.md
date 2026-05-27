@@ -64,31 +64,31 @@ El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos,
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    App móvil (Expo)                      │
+│                    App móvil (Expo)                     │
 │                                                         │
-│  ┌──────────┐  ┌──────────┐  ┌─────────┐  ┌─────────┐  │
-│  │Dashboard │  │  Datos   │  │   IA    │  │Historial│  │
-│  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬────┘  │
+│  ┌──────────┐  ┌──────────┐  ┌─────────┐  ┌─────────┐   │
+│  │Dashboard │  │  Datos   │  │   IA    │  │Historial│   │
+│  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬────┘   │
 │       └─────────────┴─────────────┴─────────────┘       │
-│                       apiClient (Axios + JWT)            │
+│                       apiClient (Axios + JWT)           │
 └───────────────────────────┬─────────────────────────────┘
                             │ HTTPS
                             ▼
 ┌─────────────────────────────────────────────────────────┐
-│                  FastAPI  (Render)                       │
+│                  FastAPI  (Render)                      │
 │                                                         │
 │  /periods  /business-data  /kpis  /recommendations      │
-│                    /users  /health                       │
+│                    /users  /health                      │
 │                                                         │
-│  ┌────────────────┐    ┌──────────────────────────────┐  │
-│  │  kpi_service   │    │        ai_service            │  │
-│  │  (cálculo puro)│    │  (prompt builder + OpenAI)   │  │
-│  └────────┬───────┘    └──────────────┬───────────────┘  │
+│  ┌────────────────┐    ┌──────────────────────────────┐ │
+│  │  kpi_service   │    │        ai_service            │ │
+│  │  (cálculo puro)│    │  (prompt builder + OpenAI)   │ │
+│  └────────┬───────┘    └──────────────┬───────────────┘ │
 └───────────┼───────────────────────────┼─────────────────┘
             │                           │
             ▼                           ▼
-┌───────────────────────┐   ┌───────────────────────────┐
-│  Supabase (PostgreSQL) │   │  OpenRouter / GPT-4o-mini  │
+┌───────────────────────┐    ┌───────────────────────────┐
+│  Supabase (PostgreSQL) │   │  OpenRouter / GPT-4o-mini │
 │  - user_profiles       │   │                           │
 │  - periods             │   │  Prompt en idioma activo  │
 │  - business_data       │   │  → JSON estructurado      │
