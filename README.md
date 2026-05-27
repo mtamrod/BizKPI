@@ -6,6 +6,8 @@
 
 *Registro semanal de KPIs · Análisis con IA · Historial exportable*
 
+📘 [**Manual de usuario**](./MANUAL_USUARIO.md) · 🛠️ Documentación técnica (este archivo)
+
 ![React Native](https://img.shields.io/badge/React_Native-0.76-61DAFB?logo=react&logoColor=white)
 ![Expo](https://img.shields.io/badge/Expo_SDK-54-000020?logo=expo&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
