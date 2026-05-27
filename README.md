@@ -22,15 +22,16 @@
 1. [Descripción](#descripción)
 2. [Características](#características)
 3. [Arquitectura](#arquitectura)
-4. [Stack tecnológico](#stack-tecnológico)
-5. [Estructura del proyecto](#estructura-del-proyecto)
-6. [Esquema de base de datos](#esquema-de-base-de-datos)
-7. [API REST](#api-rest)
-8. [Inteligencia artificial](#inteligencia-artificial)
-9. [Puesta en marcha](#puesta-en-marcha)
-10. [Tests](#tests)
-11. [Despliegue en Render](#despliegue-en-render)
-12. [Comandos útiles](#comandos-útiles)
+4. [Cumplimiento de guías de diseño](#cumplimiento-de-guías-de-diseño)
+5. [Stack tecnológico](#stack-tecnológico)
+6. [Estructura del proyecto](#estructura-del-proyecto)
+7. [Esquema de base de datos](#esquema-de-base-de-datos)
+8. [API REST](#api-rest)
+9. [Inteligencia artificial](#inteligencia-artificial)
+10. [Puesta en marcha](#puesta-en-marcha)
+11. [Tests](#tests)
+12. [Despliegue en Render](#despliegue-en-render)
+13. [Comandos útiles](#comandos-útiles)
 
 ---
 
@@ -181,6 +182,111 @@ app/
         ├── index.tsx        Lista de semanas registradas
         └── [id].tsx         Detalle de una semana concreta
 ```
+
+---
+
+## Cumplimiento de guías de diseño
+
+La aplicación se construye sobre React Native + Expo, que renderiza componentes nativos en cada plataforma. Más allá de la herencia automática del *look & feel* nativo, se han tomado decisiones explícitas de diseño para alinear la app con las guías oficiales de iOS (Human Interface Guidelines) y Android (Material Design 3).
+
+### iOS — Human Interface Guidelines
+
+**Navegación**
+
+- *Tab bar* inferior con **5 destinos**, dentro del rango recomendado por HIG (3 – 5 elementos).
+- **Iconos pareados** filled / outline según el estado activo de la pestaña, patrón nativo de iOS:
+  `grid` ↔ `grid-outline`, `time` ↔ `time-outline`, `bulb` ↔ `bulb-outline`, etc.
+- *Stack navigation* con **gesto de swipe-back lateral** activado por defecto (proporcionado por expo-router).
+- No se duplican controles entre el *tab bar* y los *headers*.
+
+**Áreas seguras**
+
+- `useSafeAreaInsets()` en el *tab bar* para respetar la *home indicator* del iPhone X y posteriores.
+- `SafeAreaProvider` montado en el layout raíz.
+- Altura del *tab bar* adaptativa: `56 + insets.bottom`.
+
+**Feedback táctil**
+
+- `TouchableOpacity` con `activeOpacity={0.75}` en botones y `0.8` en *cards*.
+- `hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}` en iconos pequeños (toggle de contraseña, iconos de input) para garantizar áreas tocables ≥ 44 pt.
+
+**Sombras nativas**
+
+- `GlassCard` usa `shadowOffset`, `shadowOpacity`, `shadowRadius` y `shadowColor` — propiedades específicas de iOS — para sombras suaves.
+- Sin `overflow: hidden` en el contenedor externo, para que la sombra se renderice fuera del *card* como exige el sistema.
+
+**Tipografía**
+
+- Pesos `'500'` para *labels* y `'600'` para CTA, acorde a la jerarquía de SF Pro.
+- `letterSpacing: 0.2` en botones para mejorar la legibilidad en pantallas pequeñas.
+
+### Android — Material Design 3
+
+**Bottom Navigation**
+
+- Cinco destinos visibles permanentemente (Material recomienda 3 – 5).
+- Iconos de Ionicons consistentes con la apariencia *outlined* / *filled* de Material Symbols.
+- Estado activo destacado con el color *primary* del tema.
+
+**Elevación**
+
+- `GlassCard` usa `elevation: 7` para la sombra nativa de Android.
+- Botones planos (variante `ghost`) sin elevación, siguiendo la jerarquía de Material 3.
+
+**Tamaño de los *targets* táctiles**
+
+- Botón sm = 40 dp · md = 50 dp · lg = 56 dp; los principales superan el mínimo Material de 48 dp.
+- `Input` con `minHeight: 50` dp.
+- Los botones pequeños se compensan con `hitSlop` cuando se usan en iconos.
+
+**Sistema de color**
+
+| Token | Dark | Light |
+|---|---|---|
+| Primary | `#7C3AED` | `#6D28D9` |
+| Primary light | `#8B5CF6` | `#7C3AED` |
+| Accent | `#10B981` | `#059669` |
+| Error | `#EF4444` | `#DC2626` |
+| Background | `#06070B` | `#F8FAFC` |
+| Text primary | `#F1F5F9` | `#0F172A` |
+
+Paleta completa duplicada para tema claro y oscuro, siguiendo el modelo de *color tokens* de Material 3.
+
+**Formas (Material 3 *shape scale*)**
+
+- `borderRadius: 12` — *small shape* (inputs).
+- `borderRadius: 14` — *medium shape* (botones).
+- `borderRadius: 20` — *large shape* (cards, expuesto en el theme como `cardRadius`).
+
+**Estados visuales**
+
+| Estado | Tratamiento |
+|---|---|
+| Disabled | `opacity: 0.5` (spec Material 3) |
+| Focus en input | Borde cambia a color *primary* |
+| Error en input | Borde rojo + mensaje debajo (`color: error`) |
+| Loading en botón | `ActivityIndicator` sustituye al label |
+
+### Accesibilidad
+
+- **Tema oscuro y claro** con conmutación en vivo desde el perfil.
+- **Contraste AA** en ambos temas:
+  - Dark: texto `#F1F5F9` sobre fondo `#06070B` → ratio > 15:1.
+  - Light: texto `#0F172A` sobre fondo `#F8FAFC` → ratio > 14:1.
+- `placeholderTextColor` claramente diferenciado del texto principal — evita confundir input vacío con relleno.
+- `numberOfLines={1}` en botones para prevenir desbordamientos.
+- `hitSlop` ampliado en iconos pequeños.
+- Toggle de visibilidad de contraseña accesible (iconos `eye-outline` ↔ `eye-off-outline`).
+
+### Decisiones multiplataforma
+
+- **StatusBar** gestionada por `expo-status-bar`, con color adaptado al tema activo.
+- Misma base de código en iOS y Android, divergiendo solo donde lo exige cada plataforma:
+  - **Sombras:** `shadow*` en iOS, `elevation` en Android — ambos coexisten en `GlassCard`.
+  - **Gestos atrás:** *swipe-back* en iOS, botón / gesto del sistema en Android — los dos gestionados por expo-router sin código extra.
+  - **Feedback al pulsar:** `TouchableOpacity` (opacidad uniforme en iOS) en todas las superficies pulsables.
+- Iconos de **Ionicons** disponibles en ambas plataformas con apariencia consistente.
+- La app es **dark-first** (tema por defecto en `app.json`), con tema claro completo disponible desde ajustes.
 
 ---
 
