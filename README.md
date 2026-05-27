@@ -99,6 +99,70 @@ El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos,
 
 ### Arquitectura de navegación (expo-router)
 
+#### Grafo de navegación
+
+El siguiente diagrama representa el flujo completo del usuario: el *auth guard* del arranque, las cinco pestañas principales, el *stack* anidado del historial y el paso de parámetros por URL.
+
+```mermaid
+graph TD
+    Start([Arranque · app/_layout.tsx])
+    AuthCheck{AuthContext<br/>¿Sesión válida?}
+
+    Start --> AuthCheck
+    AuthCheck -->|No| Login
+    AuthCheck -->|Sí| Dashboard
+
+    subgraph AuthGroup["(auth) · Stack de autenticación"]
+        Login["login.tsx<br/>Iniciar sesión"]
+        Register["register.tsx<br/>Crear cuenta"]
+        Login -->|¿No tienes cuenta?| Register
+        Register -->|Volver al login| Login
+    end
+
+    subgraph TabsGroup["(tabs) · Tab Navigator (5 pestañas)"]
+        Dashboard["index.tsx<br/>Dashboard KPIs"]
+        Data["data.tsx<br/>Registro semanal"]
+        Reco["recommendations.tsx<br/>Recomendaciones IA"]
+        Profile["profile.tsx<br/>Perfil y ajustes"]
+
+        subgraph HistStack["history/ · Stack anidado"]
+            HistList["index.tsx<br/>Lista de semanas"]
+            HistDetail["[id].tsx<br/>Detalle (param: id)"]
+            HistList -->|"router.push('/history/'+id)"| HistDetail
+            HistDetail -->|Botón atrás nativo| HistList
+        end
+    end
+
+    Login -->|Login OK| Dashboard
+    Register -->|Email confirmado| Login
+    Profile -->|Cerrar sesión| Login
+    Data -.->|Guardar registro<br/>refresca KPIs| Dashboard
+    Data -.->|Genera recomendación| Reco
+
+    classDef authNode fill:#fee2e2,stroke:#dc2626,color:#000
+    classDef tabNode fill:#dbeafe,stroke:#2563eb,color:#000
+    classDef histNode fill:#dcfce7,stroke:#16a34a,color:#000
+    classDef decision fill:#fef3c7,stroke:#ca8a04,color:#000
+    classDef start fill:#e9d5ff,stroke:#7c3aed,color:#000
+
+    class Login,Register authNode
+    class Dashboard,Data,Reco,Profile tabNode
+    class HistList,HistDetail histNode
+    class AuthCheck decision
+    class Start start
+```
+
+**Decisiones de routing destacables:**
+
+- **Auth guard** en `(tabs)/_layout.tsx`: redirige automáticamente al login si no hay sesión activa, garantizando que ninguna pantalla protegida sea accesible sin token.
+- **Persistencia de sesión**: `AuthContext` restaura el JWT desde `AsyncStorage` al iniciar la app, evitando que el usuario tenga que iniciar sesión en cada arranque.
+- **Token refresh automático**: el cliente de Supabase notifica a `AuthContext` cuando renueva el *access token*, manteniendo la sesión viva sin intervención del usuario.
+- **Paso de parámetros por ruta**: el detalle del historial recibe el `id` del período como parámetro de URL (`/history/[id]`), accesible mediante `useLocalSearchParams()` de expo-router.
+- **Botón atrás nativo**: gestionado por expo-router sin código adicional, respetando el gesto *swipe back* de iOS y la tecla física/gesto de Android.
+- **Tab bar inferior**: cinco pestañas conforme a las recomendaciones de iOS Human Interface Guidelines (máximo 5 elementos) y Material Design (Bottom Navigation).
+
+#### Estructura de ficheros
+
 ```
 app/
 ├── (auth)/
