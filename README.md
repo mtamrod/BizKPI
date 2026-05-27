@@ -89,12 +89,12 @@ El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos,
             │                           │
             ▼                           ▼
 ┌───────────────────────┐    ┌───────────────────────────┐
-│  Supabase (PostgreSQL) │   │  OpenRouter / GPT-4o-mini │
-│  - user_profiles       │   │                           │
-│  - periods             │   │  Prompt en idioma activo  │
-│  - business_data       │   │  → JSON estructurado      │
-│  - kpis                │   │                           │
-│  - ai_recommendations  │   └───────────────────────────┘
+│  Supabase (PostgreSQL)│    │  OpenRouter / GPT-4o-mini │
+│  - user_profiles      │    │                           │
+│  - periods            │    │  Prompt en idioma activo  │
+│  - business_data      │    │  → JSON estructurado      │
+│  - kpis               │    │                           │
+│  - ai_recommendations │    └───────────────────────────┘
 └───────────────────────┘
 ```
 
