@@ -14,6 +14,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 </div>
 
@@ -34,6 +35,7 @@
 11. [Tests](#tests)
 12. [Despliegue en Render](#despliegue-en-render)
 13. [Comandos útiles](#comandos-útiles)
+14. [Licencia](#licencia)
 
 ---
 
@@ -1008,3 +1010,13 @@ cd backend && mypy app/
 # Ver historial compacto
 git log --oneline --graph
 ```
+
+---
+
+## Licencia
+
+Este proyecto se distribuye bajo la **licencia MIT** — consulta el fichero [`LICENSE`](./LICENSE) para los términos completos.
+
+En resumen: puedes usar, copiar, modificar, fusionar, publicar, distribuir, sublicenciar o vender copias del software, siempre que mantengas el aviso de copyright original. El software se proporciona "tal cual", sin garantía de ningún tipo.
+
+© 2026 Mario Tamayo Rodríguez
