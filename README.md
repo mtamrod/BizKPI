@@ -6,7 +6,7 @@
 
 *Registro semanal de KPIs · Análisis con IA · Historial exportable*
 
-📘 [**Manual de usuario**](./MANUAL_USUARIO.md) · 🛠️ Documentación técnica (este archivo) · 🤖 [**Q&A con DeepWiki**](https://deepwiki.com/mtamrod/TFG-1.0)
+📘 [**Manual de usuario**](./MANUAL_USUARIO.md) · 🛠️ Documentación técnica (este archivo) · 🤖 [**Q&A con DeepWiki**](https://deepwiki.com/mtamrod/BizKPI)
 
 ![React Native](https://img.shields.io/badge/React_Native-0.76-61DAFB?logo=react&logoColor=white)
 ![Expo](https://img.shields.io/badge/Expo_SDK-54-000020?logo=expo&logoColor=white)
@@ -15,7 +15,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mtamrod/TFG-1.0)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mtamrod/BizKPI)
 
 </div>
 
@@ -563,7 +563,7 @@ Paleta completa duplicada para tema claro y oscuro, siguiendo el modelo de *colo
 ## Estructura del proyecto
 
 ```
-TFG-1.0/
+BizKPI/
 │
 ├── app/                          # Pantallas (expo-router)
 │   ├── _layout.tsx               # Layout raíz + handler de deep links
