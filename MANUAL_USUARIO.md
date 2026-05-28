@@ -51,7 +51,9 @@ La mayoría de los propietarios de negocios pequeños:
 
 BizKPI cubre los tres frentes a la vez en una app que cabe en el bolsillo.
 
-> 📸 *[Captura: pantalla de bienvenida con el logo de BizKPI]*
+<p align="center">
+  <img src="./docs/screenshots/01-welcome.jpeg" alt="Pantalla de bienvenida con el logo de BizKPI" width="500">
+</p>
 
 ---
 
@@ -90,7 +92,9 @@ Deberás introducir:
 
 Pulsa **"Crear cuenta"** para registrarte.
 
-> 📸 *[Captura: formulario de registro con los tres campos]*
+<p align="center">
+  <img src="./docs/screenshots/02-register.jpeg" alt="Formulario de registro con los tres campos" width="500">
+</p>
 
 ### 2.3 Confirmar el correo electrónico
 
@@ -112,7 +116,9 @@ Opciones disponibles:
 - **Recordarme** — interruptor (activado por defecto). Si lo dejas activado, la app guardará tu sesión y no te pedirá la contraseña cada vez que la abras.
 - **¿Olvidaste tu contraseña?** — enlace al final del formulario. Introduce tu email y pulsa "Enviar"; te llegará un correo con instrucciones para restablecerla.
 
-> 📸 *[Captura: pantalla de login con el switch "Recordarme" y el enlace de recuperar contraseña]*
+<p align="center">
+  <img src="./docs/screenshots/03-login.jpeg" alt="Pantalla de login con el switch Recordarme y el enlace de recuperar contraseña" width="500">
+</p>
 
 ---
 
@@ -139,7 +145,9 @@ Estos cuatro campos son los únicos imprescindibles. Si alguno está vacío o ti
 
 > 💡 Puedes usar coma o punto como separador decimal. La app entiende ambos.
 
-> 📸 *[Captura: formulario de datos con los cuatro campos obligatorios resaltados]*
+<p align="center">
+  <img src="./docs/screenshots/04-data-entry.jpeg" alt="Formulario de datos con los cuatro campos obligatorios" width="500">
+</p>
 
 ### 3.4 Campos opcionales
 
@@ -198,7 +206,9 @@ Cuatro tarjetas con los indicadores más relevantes de la semana actual, cada un
 
 La tendencia (flecha + porcentaje) se calcula automáticamente comparando con la semana anterior. Verde si mejora, rojo si empeora.
 
-> 📸 *[Captura: dashboard con las 4 tarjetas de KPIs y sus tendencias]*
+<p align="center">
+  <img src="./docs/screenshots/05-dashboard.jpeg" alt="Dashboard con las 4 tarjetas de KPIs y sus tendencias" width="500">
+</p>
 
 ### 4.3 Gráficos
 
@@ -231,7 +241,9 @@ Cada semana aparece como una tarjeta con:
 
 Las semanas se muestran ordenadas de más reciente a más antigua. Desliza hacia abajo para refrescar la lista.
 
-> 📸 *[Captura: lista del historial con varias tarjetas de semanas]*
+<p align="center">
+  <img src="./docs/screenshots/06-history-list.jpeg" alt="Lista del historial con varias tarjetas de semanas" width="500">
+</p>
 
 ### 5.2 Detalle de una semana
 
@@ -264,7 +276,9 @@ En la parte superior verás una fila horizontal de **chips** (uno por cada seman
 
 Toca cualquier chip para ver (o generar) su recomendación.
 
-> 📸 *[Captura: pantalla de IA con varios chips de semanas]*
+<p align="center">
+  <img src="./docs/screenshots/07-ai-recommendations.jpeg" alt="Pantalla de IA con chips de semanas y recomendación generada" width="500">
+</p>
 
 ### 6.2 Generar una recomendación
 
@@ -335,7 +349,9 @@ Desde la pestaña **Historial**, pulsa el icono de descarga en la cabecera. Se a
 
 Una vez generado, la app abre el menú nativo de compartir: puedes guardarlo en tu dispositivo, enviarlo por email, AirDrop, WhatsApp, Drive, etc.
 
-> 📸 *[Captura: modal de exportación con selector de rango de fechas]*
+<p align="center">
+  <img src="./docs/screenshots/08-export-csv.jpeg" alt="Modal de exportación con selector de rango de fechas" width="500">
+</p>
 
 ---
 
@@ -358,7 +374,9 @@ Selector de tema con tres opciones:
 
 El cambio es instantáneo, sin necesidad de reiniciar la app.
 
-> 📸 *[Captura: ajustes de tema con las tres opciones]*
+<p align="center">
+  <img src="./docs/screenshots/09-theme-settings.jpeg" alt="Ajustes de tema con las tres opciones" width="500">
+</p>
 
 ### 8.3 Cambiar moneda
 
