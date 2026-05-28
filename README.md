@@ -59,6 +59,7 @@ El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos,
 | **Historial** | Lista navegable de todas las semanas registradas. Pantalla de detalle con gráfico de distribución beneficio/gastos y grid de 7 métricas. Eliminación de registros con confirmación. |
 | **Exportación CSV** | Descarga del historial completo o de un rango de fechas seleccionado, con columnas de KPIs calculados e indicación de si existe recomendación IA. |
 | **Perfil y preferencias** | Cambio de nombre del negocio, tema (claro/oscuro), moneda de visualización (EUR / USD / GBP / JPY) y idioma de la interfaz. Cambio de contraseña en la propia app. |
+| **Recuperación de contraseña** | Flujo OTP con código de 8 dígitos enviado por email (sin enlaces *magic link* ni deep links — funciona idéntico en Expo Go, EAS Build y simulador). Pantalla dedicada con 8 casillas estilo Apple Pay y autofill iOS. |
 | **Multiidioma** | Español, inglés, francés, portugués, italiano y alemán. Las recomendaciones de IA también se generan en el idioma activo del usuario. |
 
 ---
@@ -118,11 +119,15 @@ graph TD
     AuthCheck -->|Sí| Dashboard
 
     subgraph AuthGroup["(auth) · Stack de autenticación"]
-        Login["login.tsx<br/>Iniciar sesión"]
-        Register["register.tsx<br/>Crear cuenta"]
+        Login["login.tsx<br/>Iniciar sesión (con modo registro)"]
+        Register["modo register<br/>(switch interno)"]
         Login -->|¿No tienes cuenta?| Register
         Register -->|Volver al login| Login
     end
+
+    ResetPwd["reset-password.tsx<br/>Recuperar contraseña<br/>(OTP de 8 dígitos)"]
+    Login -->|¿Olvidaste tu contraseña?| ResetPwd
+    ResetPwd -->|Contraseña actualizada| Login
 
     subgraph TabsGroup["(tabs) · Tab Navigator (5 pestañas)"]
         Dashboard["index.tsx<br/>Dashboard KPIs"]
@@ -149,12 +154,14 @@ graph TD
     classDef histNode fill:#dcfce7,stroke:#16a34a,color:#000
     classDef decision fill:#fef3c7,stroke:#ca8a04,color:#000
     classDef start fill:#e9d5ff,stroke:#7c3aed,color:#000
+    classDef rootNode fill:#fed7aa,stroke:#ea580c,color:#000
 
     class Login,Register authNode
     class Dashboard,Data,Reco,Profile tabNode
     class HistList,HistDetail histNode
     class AuthCheck decision
     class Start start
+    class ResetPwd rootNode
 ```
 
 **Decisiones de routing destacables:**
@@ -170,10 +177,13 @@ graph TD
 
 ```
 app/
+├── _layout.tsx              Layout raíz (Stack + deep links Supabase)
+│
 ├── (auth)/
 │   ├── _layout.tsx          Stack de autenticación
-│   ├── login.tsx            Inicio de sesión
-│   └── register.tsx         Registro de cuenta
+│   └── login.tsx            Login + registro (toggle de modo)
+│
+├── reset-password.tsx       Recuperación de contraseña (OTP de 8 dígitos)
 │
 └── (tabs)/
     ├── _layout.tsx          Tab bar principal (5 pestañas)
@@ -555,7 +565,9 @@ Paleta completa duplicada para tema claro y oscuro, siguiendo el modelo de *colo
 TFG-1.0/
 │
 ├── app/                          # Pantallas (expo-router)
-│   ├── (auth)/                   # Flujo de autenticación
+│   ├── _layout.tsx               # Layout raíz + handler de deep links
+│   ├── (auth)/                   # Login (con modo registro)
+│   ├── reset-password.tsx        # Recuperación contraseña (OTP)
 │   └── (tabs)/                   # Navegación principal
 │       └── history/              # Stack anidado del historial
 │
@@ -564,7 +576,7 @@ TFG-1.0/
 │   │   ├── charts/               # LineChart, BarChart, DonutChart
 │   │   ├── layout/               # ScreenWrapper, Header, AppBackground
 │   │   └── ui/                   # Button, GlassCard, Input, Badge,
-│   │                             # RecoBody, ExportModal, Loader…
+│   │                             # RecoBody, ExportModal, OtpInput, Loader…
 │   ├── hooks/
 │   │   ├── useKPIs.ts            # Datos del dashboard
 │   │   ├── useDataEntries.ts     # CRUD de registros semanales
@@ -832,6 +844,23 @@ backend/supabase/migrations/001_initial.sql
 ```
 
 Esto crea las tablas, relaciones, índices, políticas RLS y el trigger de creación de perfil automático.
+
+#### 2.1 Configurar la plantilla de email de recuperación
+
+Para que la recuperación de contraseña use el flujo OTP (código de 8 dígitos en lugar de un enlace), edita la plantilla del email en el dashboard de Supabase:
+
+**Authentication → Emails → Templates → "Reset password"**
+
+Reemplaza el cuerpo por una plantilla que incluya `{{ .Token }}` (el código generado por Supabase):
+
+```html
+<h2>Restablece tu contraseña — BizKPI</h2>
+<p>Tu código de recuperación es:</p>
+<p style="font-size: 34px; font-weight: 700; letter-spacing: 6px; font-family: monospace; text-align: center; background: #F5F3FF; padding: 16px; border-radius: 12px;">{{ .Token }}</p>
+<p>Introdúcelo en la app para continuar. El código caduca en 1 hora.</p>
+```
+
+Sin este paso, los usuarios recibirán un enlace que no apunta a ningún sitio en lugar del código OTP.
 
 ### 3. Variables de entorno
 
