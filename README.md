@@ -185,6 +185,225 @@ app/
         └── [id].tsx         Detalle de una semana concreta
 ```
 
+### Diagrama de clases del backend
+
+Vista estructural de los componentes del backend FastAPI: **modelos Pydantic** (validación + serialización), **servicios** (lógica de negocio), **routers** (endpoints HTTP) y la **infraestructura** (autenticación, configuración y clientes de servicios externos).
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% ── DOMAIN MODELS (Pydantic) ────────────────────────────────────
+    class PeriodType {
+        <<enumeration>>
+        day
+        week
+        month
+        quarter
+        year
+    }
+    class PeriodCreate {
+        <<Pydantic BaseModel>>
+        +period_type: PeriodType
+        +start_date: date
+        +end_date: date
+        +end_after_start() date
+    }
+    class PeriodRead {
+        <<Pydantic BaseModel>>
+        +id: str
+        +user_id: str
+        +period_type: PeriodType
+        +start_date: date
+        +end_date: date
+        +created_at: datetime?
+    }
+    class BusinessDataCreate {
+        <<Pydantic BaseModel>>
+        +period_id: str
+        +total_revenue: Decimal
+        +total_expenses: Decimal
+        +num_sales: int
+        +num_customers: int
+        +cost_of_goods_sold: Decimal?
+        +marketing_expenses: Decimal?
+        +refunds: Decimal?
+        +new_customers: int?
+        +returning_customers: int?
+        +top_product_name: str?
+        +top_product_revenue: Decimal?
+        +notes: str?
+        +non_negative() Decimal
+        +positive_int() int
+    }
+    class BusinessDataUpdate {
+        <<Pydantic BaseModel>>
+        +todos los campos: Optional
+    }
+    class BusinessDataRead {
+        <<Pydantic BaseModel>>
+        +id: str
+        +period_id: str
+        +user_id: str
+        +todos los campos de Create
+        +created_at: datetime?
+        +updated_at: datetime?
+    }
+    class KpiRead {
+        <<Pydantic BaseModel>>
+        +id, period_id, user_id: str
+        +revenue, expenses, net_profit: Decimal
+        +profit_margin, avg_ticket: Decimal
+        +num_sales, num_customers: int
+        +gross_margin: Decimal?
+        +customer_acquisition_rate: Decimal?
+        +returning_customer_rate: Decimal?
+        +calculated_at: datetime?
+    }
+    class RecommendationRead {
+        <<Pydantic BaseModel>>
+        +id, period_id, user_id: str
+        +recommendations: dict
+        +model_used: str
+        +generated_at: datetime?
+    }
+    class UserProfileRead {
+        <<Pydantic BaseModel>>
+        +id: str
+        +business_name: str
+        +business_sector: str?
+        +created_at: datetime?
+    }
+    class UserProfileUpdate {
+        <<Pydantic BaseModel>>
+        +business_name: str?
+        +business_sector: str?
+    }
+
+    %% ── SERVICES ────────────────────────────────────
+    class kpi_service {
+        <<module · servicio>>
+        +calculate_and_store(db, period_id, user_id, data) dict
+        -_pct(num, den) Decimal
+        -_round2(value) Decimal
+    }
+    class ai_service {
+        <<module · servicio asíncrono>>
+        +generate_and_store(openai, db, period_id, user_id, kpi, bdata, profile, period, language) async dict
+        -_build_user_prompt(kpi, bdata, profile, period) str
+        -_get_system_prompt(language) str
+    }
+
+    %% ── ROUTERS (FastAPI APIRouter) ────────────────────────────────────
+    class periods_router {
+        <<APIRouter /periods>>
+        +list_periods() PeriodRead[]
+        +create_period(PeriodCreate) PeriodRead
+        +delete_period(id) 204
+    }
+    class business_data_router {
+        <<APIRouter /business-data>>
+        +list_business_data() BusinessDataRead[]
+        +create_business_data(BusinessDataCreate) BusinessDataRead
+        +update_business_data(id, BusinessDataUpdate) BusinessDataRead
+        +delete_business_data(id) 204
+    }
+    class kpis_router {
+        <<APIRouter /kpis>>
+        +list_kpis() KpiRead[]
+        +get_kpi(period_id) KpiRead
+        +calculate_kpis(period_id) KpiRead
+    }
+    class recommendations_router {
+        <<APIRouter /recommendations>>
+        +list_recommendations() RecommendationRead[]
+        +get_recommendation(period_id) RecommendationRead
+        +generate(period_id, language) async RecommendationRead
+        +delete(period_id) 204
+    }
+    class users_router {
+        <<APIRouter /users>>
+        +me() UserProfileRead
+        +update_me(UserProfileUpdate) UserProfileRead
+    }
+
+    %% ── INFRASTRUCTURE ────────────────────────────────────
+    class auth_dependency {
+        <<FastAPI dependency>>
+        +get_current_user_id(credentials) str
+        -_get_public_key() ECPublicKey
+        -_b64_to_int(b64) int
+    }
+    class Settings {
+        <<Pydantic BaseSettings>>
+        +supabase_url: str
+        +supabase_service_key: str
+        +supabase_jwt_jwk: str
+        +openrouter_api_key: str
+        +app_env: str
+        +is_production() bool
+    }
+    class supabase_client {
+        <<core · cliente>>
+        +get_supabase() Client
+    }
+    class openai_client {
+        <<core · cliente>>
+        +get_openai() AsyncOpenAI
+    }
+
+    %% ── DEPENDENCIES (uses) ────────────────────────────────────
+    PeriodCreate ..> PeriodType
+    PeriodRead ..> PeriodType
+
+    periods_router ..> PeriodCreate : valida
+    periods_router ..> PeriodRead : serializa
+    periods_router ..> auth_dependency : protege
+    periods_router ..> supabase_client : DB
+
+    business_data_router ..> BusinessDataCreate : valida
+    business_data_router ..> BusinessDataUpdate : valida
+    business_data_router ..> BusinessDataRead : serializa
+    business_data_router ..> kpi_service : invoca
+    business_data_router ..> auth_dependency : protege
+    business_data_router ..> supabase_client : DB
+
+    kpis_router ..> KpiRead : serializa
+    kpis_router ..> kpi_service : invoca
+    kpis_router ..> auth_dependency : protege
+    kpis_router ..> supabase_client : DB
+
+    recommendations_router ..> RecommendationRead : serializa
+    recommendations_router ..> ai_service : invoca
+    recommendations_router ..> auth_dependency : protege
+    recommendations_router ..> supabase_client : DB
+
+    users_router ..> UserProfileRead : serializa
+    users_router ..> UserProfileUpdate : valida
+    users_router ..> auth_dependency : protege
+    users_router ..> supabase_client : DB
+
+    kpi_service ..> supabase_client : upsert kpis
+    ai_service ..> supabase_client : upsert recomendaciones
+    ai_service ..> openai_client : llamada LLM
+
+    auth_dependency ..> Settings : JWK
+    supabase_client ..> Settings : URL+key
+    openai_client ..> Settings : API key
+```
+
+### Lectura del diagrama
+
+- **Modelos Pydantic** *(arriba)*: definen la forma de los datos que entran y salen de los endpoints. `*Create` valida entradas, `*Read` serializa salidas, `*Update` permite actualizaciones parciales.
+- **Servicios** *(centro)*: encapsulan la lógica que no debe vivir en los routers. `kpi_service` es aritmético puro (testeable sin BD); `ai_service` es asíncrono y orquesta la llamada al LLM con el contexto del usuario.
+- **Routers** *(centro-bajo)*: cada uno mapea a un *prefix* de URL. Solo se ocupan de:
+  1. Recibir y validar la petición (Pydantic).
+  2. Verificar autorización (`auth_dependency`).
+  3. Delegar la lógica al servicio correspondiente.
+  4. Devolver la respuesta serializada.
+- **Infraestructura** *(abajo)*: clases utilitarias singleton (`Settings` cacheado, clientes Supabase / OpenAI vía `lru_cache`).
+- **Flechas punteadas (`..>`)**: dependencia tipo *uses*. Ninguna clase del diagrama implementa herencia entre sí, salvo la implícita `BaseModel` / `BaseSettings` de Pydantic.
+
 ---
 
 ## Cumplimiento de guías de diseño
@@ -397,34 +616,92 @@ TFG-1.0/
 
 ## Esquema de base de datos
 
-```
-auth.users  (gestionado por Supabase)
-    │
-    ├──▶ user_profiles
-    │       id (FK auth.users) · business_name · business_sector
-    │
-    ├──▶ periods
-    │       id · user_id · period_type · start_date · end_date
-    │       UNIQUE (user_id, start_date, end_date)
-    │
-    │       └──▶ business_data
-    │                id · period_id · user_id
-    │                total_revenue · total_expenses · num_sales · num_customers
-    │                top_product · top_product_revenue · best_day · worst_day
-    │                cost_of_goods_sold · observations
-    │
-    │       └──▶ kpis
-    │                id · period_id · user_id
-    │                revenue · expenses · net_profit · profit_margin
-    │                gross_margin · avg_ticket · num_sales · num_customers
-    │
-    └──▶ ai_recommendations
-             id · period_id · user_id
-             model_used · generated_at
-             recommendations (JSONB) → { summary, highlights[], recommendations[], forecast }
+### Diagrama entidad-relación
+
+```mermaid
+erDiagram
+    auth_users ||--|| user_profiles : "tiene perfil"
+    auth_users ||--o{ periods : "registra"
+    periods ||--|| business_data : "describe"
+    periods ||--|| kpis : "se calcula a"
+    periods ||--o| ai_recommendations : "genera (0..1)"
+
+    auth_users {
+        UUID id PK "gestionado por Supabase"
+        TEXT email
+        TIMESTAMPTZ created_at
+    }
+    user_profiles {
+        UUID id PK "FK → auth.users (1:1)"
+        TEXT business_name
+        TEXT business_sector "nullable"
+        TIMESTAMPTZ created_at
+    }
+    periods {
+        UUID id PK
+        UUID user_id FK "→ auth.users"
+        ENUM period_type "day · week · month · quarter · year"
+        DATE start_date
+        DATE end_date
+        TIMESTAMPTZ created_at
+    }
+    business_data {
+        UUID id PK
+        UUID period_id FK "UNIQUE → periods"
+        UUID user_id FK "→ auth.users"
+        NUMERIC total_revenue "≥ 0"
+        NUMERIC total_expenses "≥ 0"
+        INTEGER num_sales "> 0"
+        INTEGER num_customers "> 0"
+        NUMERIC cost_of_goods_sold "opcional"
+        NUMERIC marketing_expenses "opcional"
+        NUMERIC refunds "opcional"
+        INTEGER new_customers "opcional"
+        INTEGER returning_customers "opcional"
+        TEXT top_product_name "opcional"
+        NUMERIC top_product_revenue "opcional"
+        TEXT notes "opcional"
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+    kpis {
+        UUID id PK
+        UUID period_id FK "UNIQUE → periods"
+        UUID user_id FK "→ auth.users"
+        NUMERIC revenue "calculado"
+        NUMERIC expenses "calculado"
+        NUMERIC net_profit "calculado"
+        NUMERIC profit_margin "% calculado"
+        INTEGER num_sales
+        INTEGER num_customers
+        NUMERIC avg_ticket "calculado"
+        NUMERIC gross_margin "% opcional"
+        NUMERIC customer_acquisition_rate "% opcional"
+        NUMERIC returning_customer_rate "% opcional"
+        TIMESTAMPTZ calculated_at
+    }
+    ai_recommendations {
+        UUID id PK
+        UUID period_id FK "UNIQUE → periods"
+        UUID user_id FK "→ auth.users"
+        JSONB recommendations "summary + highlights[] + recommendations[] + forecast"
+        TEXT model_used "default: openai/gpt-4o-mini"
+        TIMESTAMPTZ generated_at
+    }
 ```
 
-Todas las tablas tienen Row Level Security (RLS) activo — cada usuario solo accede a sus propios datos.
+### Decisiones de diseño
+
+- **`auth.users` es responsabilidad de Supabase Auth** — el backend nunca toca esa tabla directamente; solo lee el `sub` (UUID) del JWT.
+- **`user_profiles` extiende `auth.users` mediante una FK PK** — sin duplicar la lógica de autenticación. Un trigger SQL (`handle_new_user`) crea automáticamente el perfil al registrar un usuario.
+- **Restricción `UNIQUE` sobre `period_id`** en `business_data`, `kpis` y `ai_recommendations` — garantiza una sola fila por período en cada una de estas tablas.
+- **`ON DELETE CASCADE`** en todas las FK — al eliminar un usuario o un período, sus dependencias se borran automáticamente, evitando filas huérfanas.
+- **`CHECK constraints`** sobre los campos numéricos críticos (`total_revenue ≥ 0`, `num_sales > 0`, etc.) — la validación se duplica en BD para defensa en profundidad respecto a la validación Pydantic.
+- **`recommendations` se almacena como `JSONB`** — permite consultas eficientes sobre el contenido (operadores `->`, `->>`) sin necesidad de normalizar la respuesta de la IA en múltiples tablas.
+
+### Seguridad (Row Level Security)
+
+Todas las tablas tienen **RLS activo** con políticas `auth.uid() = user_id` (o `= id` en `user_profiles`). Esto significa que un cliente autenticado solo puede leer/escribir/borrar sus propias filas — la BD rechaza cualquier intento de acceso cruzado a nivel de motor, no a nivel de aplicación.
 
 ---
 
