@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#06070B" />
+  <title>BizKPI — Business Intelligence para pequeños negocios</title>
+  <meta name="description" content="Aplicación móvil multiplataforma para registrar KPIs semanales, visualizar la salud financiera de tu negocio y recibir recomendaciones con IA. Trabajo de Fin de Grado." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="BizKPI · Business Intelligence para pequeños negocios" />
+  <meta property="og:description" content="Registra. Analiza. Crece. Aplicación móvil con IA para llevar las cuentas de tu negocio sin Excel." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="./screenshots/05-dashboard.jpeg" />
+
+  <!-- Favicon: stylized B with gradient (inline SVG, no external file) -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%237C3AED'/%3E%3Cstop offset='100%25' stop-color='%2310B981'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='50%25' y='52%25' dominant-baseline='middle' text-anchor='middle' font-family='-apple-system,BlinkMacSystemFont,sans-serif' font-weight='800' font-size='38' fill='white'%3EB%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    /* ─── Tokens (a juego con la app) ─────────────────────── */
+    :root {
+      --bg: #06070B;
+      --bg-2: #0D1020;
+      --surface: #11141E;
+      --surface-2: #181C28;
+      --primary: #7C3AED;
+      --primary-light: #8B5CF6;
+      --accent: #10B981;
+      --accent-light: #34D399;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.16);
+      --radius: 20px;
+      --radius-sm: 12px;
+      --gradient: linear-gradient(135deg, #7C3AED 0%, #10B981 100%);
+    }
+
+    /* ─── Reset & base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    /* ─── Container ────────────────────────────────────────── */
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+    /* ─── Nav ──────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(6, 7, 11, 0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .inner {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 24px; max-width: 1180px; margin: 0 auto;
+    }
+    nav .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 18px; letter-spacing: -0.5px;
+    }
+    nav .logo-mark {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient);
+      display: grid; place-items: center;
+      color: white; font-weight: 800; font-size: 18px;
+    }
+    nav .links { display: flex; gap: 28px; font-size: 14px; color: var(--text-secondary); }
+    nav .links a:hover { color: var(--text-primary); transition: color .2s; }
+    @media (max-width: 640px) { nav .links { display: none; } }
+
+    /* ─── Hero ─────────────────────────────────────────────── */
+    .hero {
+      position: relative; padding: 96px 24px 80px; text-align: center;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(124,58,237,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -100px; right: -100px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; }
+    .badge {
+      display: inline-block; padding: 6px 14px;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.30);
+      border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      color: var(--primary-light); letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+      margin: 0 0 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #C4B5FD 100%);
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+    }
+    .hero p.lead {
+      font-size: clamp(17px, 2vw, 20px);
+      color: var(--text-secondary);
+      max-width: 580px; margin: 0 auto 40px;
+    }
+    .cta-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 26px;
+      border-radius: 14px;
+      font-weight: 600; font-size: 15px;
+      transition: all .2s;
+      cursor: pointer; border: 0;
+    }
+    .btn-primary {
+      background: var(--gradient);
+      color: white;
+      box-shadow: 0 8px 28px rgba(124,58,237,0.35);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,58,237,0.5); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border-strong);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.08); }
+
+    /* ─── Sections ─────────────────────────────────────────── */
+    section { padding: 80px 0; }
+    .section-header { text-align: center; margin-bottom: 56px; }
+    .section-header .label {
+      font-size: 12px; font-weight: 700; letter-spacing: 2px;
+      color: var(--primary-light); text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-header h2 {
+      font-size: clamp(28px, 4vw, 40px); font-weight: 700;
+      letter-spacing: -1px; margin: 0 0 12px;
+    }
+    .section-header p {
+      color: var(--text-secondary); font-size: 16px;
+      max-width: 600px; margin: 0 auto;
+    }
+
+    /* ─── Features grid ────────────────────────────────────── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature {
+      background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: all .25s;
+    }
+    .feature:hover {
+      transform: translateY(-4px);
+      border-color: rgba(124,58,237,0.3);
+      box-shadow: 0 12px 36px rgba(124,58,237,0.15);
+    }
+    .feature .icon {
+      width: 48px; height: 48px;
+      background: rgba(124,58,237,0.15);
+      border-radius: 12px;
+      display: grid; place-items: center;
+      font-size: 24px; margin-bottom: 16px;
+    }
+    .feature h3 {
+      font-size: 18px; font-weight: 700;
+      margin: 0 0 8px; letter-spacing: -0.3px;
+    }
+    .feature p {
+      font-size: 14px; color: var(--text-secondary);
+      margin: 0; line-height: 1.6;
+    }
+
+    /* ─── Screenshots ──────────────────────────────────────── */
+    .screenshots-section { background: var(--bg-2); }
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .screenshot {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all .25s;
+      cursor: zoom-in;
+    }
+    .screenshot:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--primary-light);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .screenshot img { width: 100%; height: auto; display: block; }
+    .screenshot .caption {
+      padding: 12px 16px;
+      font-size: 13px; color: var(--text-secondary); font-weight: 500;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── Stack ────────────────────────────────────────────── */
+    .stack-badges {
+      display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    }
+    .badge-tech {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-primary);
+    }
+    .badge-tech .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    /* ─── CTA section ──────────────────────────────────────── */
+    .cta-section {
+      background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(16,185,129,0.08) 100%);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-section h2 {
+      font-size: clamp(28px, 4vw, 40px); font-weight: 700;
+      letter-spacing: -1px; margin: 0 0 16px;
+    }
+    .cta-section p {
+      color: var(--text-secondary); max-width: 540px;
+      margin: 0 auto 32px;
+    }
+
+    /* ─── Footer ───────────────────────────────────────────── */
+    footer {
+      padding: 48px 24px 32px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    footer .foot-logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-weight: 800; font-size: 18px;
+      margin-bottom: 16px;
+    }
+    footer .foot-links {
+      display: flex; gap: 24px; justify-content: center;
+      font-size: 14px; color: var(--text-secondary);
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    footer .foot-links a:hover { color: var(--text-primary); }
+    footer .foot-credit {
+      font-size: 12px; color: var(--text-muted);
+    }
+
+    /* ─── Responsive tweaks ────────────────────────────────── */
+    @media (max-width: 640px) {
+      section { padding: 56px 0; }
+      .hero { padding: 64px 24px 56px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── NAV ─────────────────────────────────────────────── -->
+  <nav>
+    <div class="inner">
+      <a href="#hero" class="logo">
+        <span class="logo-mark">B</span>
+        <span>BizKPI</span>
+      </a>
+      <div class="links">
+        <a href="#features">Características</a>
+        <a href="#screenshots">Capturas</a>
+        <a href="#stack">Stack</a>
+        <a href="https://github.com/mtamrod/TFG-1.0">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ────────────────────────────────────────────── -->
+  <header class="hero" id="hero">
+    <div class="hero-content">
+      <span class="badge">Trabajo de Fin de Grado · DAM</span>
+      <h1>Business Intelligence para pequeños negocios</h1>
+      <p class="lead">
+        Registra los KPIs de tu bar, tienda o taller una vez por semana. Visualiza
+        la salud financiera en un panel intuitivo y recibe recomendaciones
+        accionables generadas con IA.
+      </p>
+      <div class="cta-row">
+        <a href="https://github.com/mtamrod/TFG-1.0" class="btn btn-primary">
+          Ver en GitHub →
+        </a>
+        <a href="https://github.com/mtamrod/TFG-1.0/blob/main/MANUAL_USUARIO.md" class="btn btn-secondary">
+          📘 Manual de usuario
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── FEATURES ────────────────────────────────────────── -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="label">Características</div>
+        <h2>Todo lo que necesitas para entender tu negocio</h2>
+        <p>Sin hojas de cálculo, sin asesores, sin curvas de aprendizaje.</p>
+      </div>
+
+      <div class="features">
+
+        <div class="feature">
+          <div class="icon">📊</div>
+          <h3>Dashboard en tiempo real</h3>
+          <p>Ingresos, clientes, beneficio neto y ventas con su tendencia semana a semana. Gráficos de línea, barras y donut.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">🤖</div>
+          <h3>Recomendaciones con IA</h3>
+          <p>GPT-4o mini analiza tus datos y genera resumen, puntos clave y acciones priorizadas, adaptadas al sector de tu negocio.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">📝</div>
+          <h3>Registro guiado</h3>
+          <p>Solo 4 campos obligatorios por semana. Validación inline, selector visual de período y reemplazo seguro.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">📅</div>
+          <h3>Historial completo</h3>
+          <p>Lista navegable con todas las semanas, detalle por período y eliminación con confirmación.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">📥</div>
+          <h3>Exportación CSV</h3>
+          <p>Descarga todo el historial o un rango concreto en formato compatible con Excel, Sheets o Numbers.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">🔒</div>
+          <h3>Seguridad robusta</h3>
+          <p>Autenticación JWT ES256, Row Level Security en PostgreSQL y validación en triple capa. Tus datos son solo tuyos.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">🌍</div>
+          <h3>Multiidioma</h3>
+          <p>Interfaz en 6 idiomas (ES, EN, FR, PT, IT, DE). Las recomendaciones de IA también en tu idioma.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">🎨</div>
+          <h3>Tema claro / oscuro</h3>
+          <p>Adaptado a iOS HIG y Material Design 3. Conmutación en vivo y respeto a las preferencias del sistema.</p>
+        </div>
+
+        <div class="feature">
+          <div class="icon">📱</div>
+          <h3>iOS &amp; Android</h3>
+          <p>Una sola base de código React Native con Expo SDK 54. Despliegue vía EAS Build a las dos plataformas.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SCREENSHOTS ─────────────────────────────────────── -->
+  <section id="screenshots" class="screenshots-section">
+    <div class="container">
+      <div class="section-header">
+        <div class="label">En la app</div>
+        <h2>Capturas reales del producto</h2>
+        <p>Tema oscuro por defecto, gráficos suaves y formularios sin fricción.</p>
+      </div>
+
+      <div class="screenshot-grid">
+        <div class="screenshot">
+          <img src="./screenshots/05-dashboard.jpeg" alt="Dashboard con KPIs y tendencias" loading="lazy" />
+          <div class="caption">Dashboard de KPIs</div>
+        </div>
+        <div class="screenshot">
+          <img src="./screenshots/04-data-entry.jpeg" alt="Formulario de registro semanal" loading="lazy" />
+          <div class="caption">Registro semanal</div>
+        </div>
+        <div class="screenshot">
+          <img src="./screenshots/07-ai-recommendations.jpeg" alt="Recomendaciones generadas con IA" loading="lazy" />
+          <div class="caption">Recomendaciones IA</div>
+        </div>
+        <div class="screenshot">
+          <img src="./screenshots/06-history-list.jpeg" alt="Historial de semanas registradas" loading="lazy" />
+          <div class="caption">Historial completo</div>
+        </div>
+        <div class="screenshot">
+          <img src="./screenshots/08-export-csv.jpeg" alt="Modal de exportación a CSV" loading="lazy" />
+          <div class="caption">Exportar CSV</div>
+        </div>
+        <div class="screenshot">
+          <img src="./screenshots/01-welcome.jpeg" alt="Pantalla de inicio de sesión" loading="lazy" />
+          <div class="caption">Acceso seguro</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STACK ───────────────────────────────────────────── -->
+  <section id="stack">
+    <div class="container">
+      <div class="section-header">
+        <div class="label">Stack tecnológico</div>
+        <h2>Tecnologías modernas, decisiones cuidadas</h2>
+        <p>Cada pieza elegida por una razón: tipado estricto, validación en todas las capas y servicios gestionados.</p>
+      </div>
+
+      <div class="stack-badges">
+        <span class="badge-tech"><span class="dot" style="background:#61DAFB"></span>React Native 0.76</span>
+        <span class="badge-tech"><span class="dot" style="background:#000020"></span>Expo SDK 54</span>
+        <span class="badge-tech"><span class="dot" style="background:#3178C6"></span>TypeScript 5</span>
+        <span class="badge-tech"><span class="dot" style="background:#009688"></span>FastAPI 0.115</span>
+        <span class="badge-tech"><span class="dot" style="background:#3776AB"></span>Python 3.11</span>
+        <span class="badge-tech"><span class="dot" style="background:#E92063"></span>Pydantic v2</span>
+        <span class="badge-tech"><span class="dot" style="background:#3ECF8E"></span>Supabase</span>
+        <span class="badge-tech"><span class="dot" style="background:#336791"></span>PostgreSQL</span>
+        <span class="badge-tech"><span class="dot" style="background:#412991"></span>OpenAI · GPT-4o mini</span>
+        <span class="badge-tech"><span class="dot" style="background:#46E3B7"></span>Render</span>
+        <span class="badge-tech"><span class="dot" style="background:#F7DF1E"></span>Jest 115 tests</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA ─────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="container">
+      <h2>Explora el proyecto</h2>
+      <p>
+        Código abierto bajo licencia MIT. Documentación completa, manual de usuario,
+        diagramas de arquitectura y pruebas de usabilidad disponibles en el repositorio.
+      </p>
+      <div class="cta-row">
+        <a href="https://github.com/mtamrod/TFG-1.0" class="btn btn-primary">
+          Repositorio en GitHub
+        </a>
+        <a href="https://github.com/mtamrod/TFG-1.0/blob/main/README.md" class="btn btn-secondary">
+          Documentación técnica
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ──────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="foot-logo">
+        <span class="logo-mark" style="width:32px;height:32px;border-radius:8px;background:var(--gradient);display:inline-grid;place-items:center;color:white;font-weight:800;font-size:18px;">B</span>
+        <span>BizKPI</span>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/mtamrod/TFG-1.0">GitHub</a>
+        <a href="https://github.com/mtamrod/TFG-1.0/blob/main/MANUAL_USUARIO.md">Manual</a>
+        <a href="https://github.com/mtamrod/TFG-1.0/blob/main/PRUEBAS_USABILIDAD.md">Pruebas usabilidad</a>
+        <a href="https://github.com/mtamrod/TFG-1.0/blob/main/LICENSE">Licencia MIT</a>
+      </div>
+      <div class="foot-credit">
+        © 2026 Mario Tamayo Rodríguez · Trabajo de Fin de Grado · IES Rafael Alberti
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
