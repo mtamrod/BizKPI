@@ -57,6 +57,13 @@ export default {
   reset_password_success_title: '✓ Passwort aktualisiert',
   reset_password_success_msg: 'Sie können sich jetzt mit Ihrem neuen Passwort anmelden.',
 
+  verify_code_title: 'Wiederherstellungscode',
+  verify_code_subtitle: 'Wir haben einen 6-stelligen Code an {{email}} gesendet. Geben Sie ihn unten ein, um fortzufahren.',
+  verify_code_label: 'Code',
+  verify_code_submit: 'Code überprüfen',
+  verify_code_invalid: 'Der Code muss 6 Stellen haben.',
+  verify_code_no_email: 'E-Mail fehlt. Gehen Sie zurück zur Anmeldung und versuchen Sie es erneut.',
+
   dashboard_subtitle: 'Woche {{week}} · Dashboard',
   dashboard_active: 'Aktiv',
   dashboard_error_title: 'Ladefehler',

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
@@ -10,18 +10,55 @@ import { Input } from '@/components/ui/Input';
 import { supabase } from '@/lib/supabaseClient';
 import { useTheme } from '@/theme/ThemeContext';
 
+type Stage = 'verify' | 'change';
+
 export default function ResetPasswordScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation();
+  const params = useLocalSearchParams<{ email?: string }>();
+  const email = params.email ?? '';
 
-  const [newPassword, setNewPassword]         = useState('');
+  const [stage, setStage]                 = useState<Stage>('verify');
+  const [code, setCode]                   = useState('');
+  const [newPassword, setNewPassword]     = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [saving, setSaving]                   = useState(false);
-  const [error, setError]                     = useState('');
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState('');
 
-  async function handleSubmit() {
+  // If user arrived via deep link (session already set), skip the OTP stage.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setStage('change');
+    });
+  }, []);
+
+  async function verifyCode() {
     setError('');
+    if (code.length !== 6) {
+      setError(t('verify_code_invalid'));
+      return;
+    }
+    if (!email) {
+      setError(t('verify_code_no_email'));
+      return;
+    }
+    setSaving(true);
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'recovery',
+    });
+    setSaving(false);
+    if (verifyError) {
+      setError(verifyError.message);
+      return;
+    }
+    setStage('change');
+    setError('');
+  }
 
+  async function changePassword() {
+    setError('');
     if (newPassword.length < 6) {
       setError(t('reset_password_too_short'));
       return;
@@ -30,7 +67,6 @@ export default function ResetPasswordScreen() {
       setError(t('reset_password_mismatch'));
       return;
     }
-
     setSaving(true);
     const { error: updateError } = await supabase.auth.updateUser({
       password: newPassword,
@@ -57,58 +93,79 @@ export default function ResetPasswordScreen() {
     );
   }
 
-  async function handleCancel() {
+  async function handleBack() {
     await supabase.auth.signOut();
     router.replace('/(auth)/login');
   }
+
+  const isVerify = stage === 'verify';
 
   return (
     <ScreenWrapper scrollable keyboardAware contentStyle={styles.content}>
       <View style={styles.logoArea}>
         <View style={[styles.iconBox, { backgroundColor: `${colors.primary}22` }]}>
-          <Ionicons name="lock-open-outline" size={34} color={colors.primaryLight} />
+          <Ionicons
+            name={isVerify ? 'mail-outline' : 'lock-open-outline'}
+            size={34}
+            color={colors.primaryLight}
+          />
         </View>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
-          {t('reset_password_title')}
+          {isVerify ? t('verify_code_title') : t('reset_password_title')}
         </Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {t('reset_password_subtitle')}
+          {isVerify
+            ? t('verify_code_subtitle', { email: email || '—' })
+            : t('reset_password_subtitle')}
         </Text>
       </View>
 
       <GlassCard style={styles.card}>
-        <View style={styles.form}>
+        {isVerify ? (
           <Input
-            label={t('reset_password_new_label')}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            placeholder={t('reset_password_new_placeholder')}
-            secureTextEntry
-            leftIcon="lock-closed-outline"
+            label={t('verify_code_label')}
+            value={code}
+            onChangeText={(v) => setCode(v.replace(/[^0-9]/g, '').slice(0, 6))}
+            placeholder="123456"
+            keyboardType="number-pad"
+            maxLength={6}
+            leftIcon="keypad-outline"
+            autoFocus
           />
-          <Input
-            label={t('reset_password_confirm_label')}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder={t('reset_password_confirm_placeholder')}
-            secureTextEntry
-            leftIcon="lock-closed-outline"
-          />
-        </View>
+        ) : (
+          <View style={styles.form}>
+            <Input
+              label={t('reset_password_new_label')}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder={t('reset_password_new_placeholder')}
+              secureTextEntry
+              leftIcon="lock-closed-outline"
+            />
+            <Input
+              label={t('reset_password_confirm_label')}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder={t('reset_password_confirm_placeholder')}
+              secureTextEntry
+              leftIcon="lock-closed-outline"
+            />
+          </View>
+        )}
 
         {error ? (
           <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
         ) : null}
 
         <Button
-          label={t('reset_password_submit')}
-          onPress={handleSubmit}
+          label={isVerify ? t('verify_code_submit') : t('reset_password_submit')}
+          onPress={isVerify ? verifyCode : changePassword}
           loading={saving}
         />
 
         <Text
           style={[styles.backLink, { color: colors.primaryLight }]}
-          onPress={handleCancel}
+          onPress={handleBack}
         >
           {t('reset_password_back_to_login')}
         </Text>

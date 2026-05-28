@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
@@ -150,14 +150,15 @@ export default function LoginScreen() {
                       text: t('login_recover_send'),
                       onPress: async () => {
                         if (!email.trim()) { Alert.alert(t('login_no_email')); return; }
+                        const trimmed = email.trim().toLowerCase();
                         const { supabase } = await import('@/lib/supabaseClient');
-                        const redirectTo = Linking.createURL('reset-password');
-                        const { error: err } = await supabase.auth.resetPasswordForEmail(
-                          email.trim(),
-                          { redirectTo },
-                        );
-                        if (err) Alert.alert('Error', err.message);
-                        else Alert.alert(t('login_recover_sent_title'), t('login_recover_sent_msg', { email: email.trim() }));
+                        const { error: err } = await supabase.auth.resetPasswordForEmail(trimmed);
+                        if (err) { Alert.alert('Error', err.message); return; }
+                        // Navigate straight to the OTP screen — the user will paste the code from the email.
+                        router.push({
+                          pathname: '/reset-password',
+                          params: { email: trimmed },
+                        });
                       },
                     },
                   ],

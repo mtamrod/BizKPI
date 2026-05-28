@@ -57,6 +57,13 @@ export default {
   reset_password_success_title: '✓ Mot de passe mis à jour',
   reset_password_success_msg: 'Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.',
 
+  verify_code_title: 'Code de récupération',
+  verify_code_subtitle: 'Nous avons envoyé un code à 6 chiffres à {{email}}. Saisissez-le ci-dessous pour continuer.',
+  verify_code_label: 'Code',
+  verify_code_submit: 'Vérifier le code',
+  verify_code_invalid: 'Le code doit comporter 6 chiffres.',
+  verify_code_no_email: 'L\'e-mail est manquant. Retournez à la connexion et réessayez.',
+
   dashboard_subtitle: 'Semaine {{week}} · Tableau de bord',
   dashboard_active: 'Actif',
   dashboard_error_title: 'Échec du chargement',

@@ -57,6 +57,13 @@ export default {
   reset_password_success_title: '✓ Senha atualizada',
   reset_password_success_msg: 'Agora você pode entrar com sua nova senha.',
 
+  verify_code_title: 'Código de recuperação',
+  verify_code_subtitle: 'Enviamos um código de 6 dígitos para {{email}}. Digite-o abaixo para continuar.',
+  verify_code_label: 'Código',
+  verify_code_submit: 'Verificar código',
+  verify_code_invalid: 'O código deve ter 6 dígitos.',
+  verify_code_no_email: 'E-mail ausente. Volte ao login e tente novamente.',
+
   dashboard_subtitle: 'Semana {{week}} · Painel principal',
   dashboard_active: 'Ativo',
   dashboard_error_title: 'Falha ao carregar',
