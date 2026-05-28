@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
@@ -150,7 +151,11 @@ export default function LoginScreen() {
                       onPress: async () => {
                         if (!email.trim()) { Alert.alert(t('login_no_email')); return; }
                         const { supabase } = await import('@/lib/supabaseClient');
-                        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim());
+                        const redirectTo = Linking.createURL('reset-password');
+                        const { error: err } = await supabase.auth.resetPasswordForEmail(
+                          email.trim(),
+                          { redirectTo },
+                        );
                         if (err) Alert.alert('Error', err.message);
                         else Alert.alert(t('login_recover_sent_title'), t('login_recover_sent_msg', { email: email.trim() }));
                       },

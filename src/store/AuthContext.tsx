@@ -6,6 +6,8 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
+import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { authService } from '@/services/authService';
 import { supabase } from '@/lib/supabaseClient';
 import { userService } from '@/services/userService';
@@ -106,6 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, supabaseSession) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          // Recovery link clicked — go straight to the reset screen.
+          // Do NOT dispatch LOGIN_SUCCESS: the recovery session is transient.
+          router.replace('/reset-password');
+          return;
+        }
+
         if (event === 'TOKEN_REFRESHED' && supabaseSession) {
           const profile = await userService.getProfile().catch(() => null);
           const updatedSession: UserSession = {
@@ -130,6 +139,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     );
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Handle deep links with auth tokens (password recovery flow).
+  // Supabase appends tokens to the URL as a fragment:
+  //   bizkpi://reset-password#access_token=...&refresh_token=...&type=recovery
+  useEffect(() => {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+      const hashIndex = url.indexOf('#');
+      if (hashIndex === -1) return;
+      const params = new URLSearchParams(url.substring(hashIndex + 1));
+      const access_token = params.get('access_token');
+      const refresh_token = params.get('refresh_token');
+      const type = params.get('type');
+      if (type === 'recovery' && access_token && refresh_token) {
+        // setSession triggers a PASSWORD_RECOVERY event handled above,
+        // which is responsible for the navigation.
+        await supabase.auth.setSession({ access_token, refresh_token });
+      }
+    };
+
+    Linking.getInitialURL().then(handleUrl).catch(() => {});
+    const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => subscription.remove();
   }, []);
 
   const login = useCallback(async (input: LoginInput) => {
