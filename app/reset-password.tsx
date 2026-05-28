@@ -7,6 +7,7 @@ import { ScreenWrapper } from '@/components/layout/ScreenWrapper';
 import { Button } from '@/components/ui/Button';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Input } from '@/components/ui/Input';
+import { OtpInput } from '@/components/ui/OtpInput';
 import { supabase } from '@/lib/supabaseClient';
 import { useTheme } from '@/theme/ThemeContext';
 
@@ -122,16 +123,17 @@ export default function ResetPasswordScreen() {
 
       <GlassCard style={styles.card}>
         {isVerify ? (
-          <Input
-            label={t('verify_code_label')}
-            value={code}
-            onChangeText={(v) => setCode(v.replace(/[^0-9]/g, '').slice(0, 8))}
-            placeholder="12345678"
-            keyboardType="number-pad"
-            maxLength={8}
-            leftIcon="keypad-outline"
-            autoFocus
-          />
+          <View style={styles.otpBlock}>
+            <Text style={[styles.otpLabel, { color: colors.textSecondary }]}>
+              {t('verify_code_label')}
+            </Text>
+            <OtpInput
+              value={code}
+              onChange={setCode}
+              length={8}
+              error={!!error}
+            />
+          </View>
         ) : (
           <View style={styles.form}>
             <Input
@@ -188,6 +190,12 @@ const styles = StyleSheet.create({
   },
   card: { padding: 24, gap: 16 },
   form: { gap: 12 },
+  otpBlock: { gap: 10 },
+  otpLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
   errorText: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
   backLink: {
     fontSize: 13, fontWeight: '600',
