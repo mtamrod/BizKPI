@@ -34,7 +34,7 @@ export default function ResetPasswordScreen() {
 
   async function verifyCode() {
     setError('');
-    if (code.length !== 6) {
+    if (code.length !== 8) {
       setError(t('verify_code_invalid'));
       return;
     }
@@ -125,10 +125,10 @@ export default function ResetPasswordScreen() {
           <Input
             label={t('verify_code_label')}
             value={code}
-            onChangeText={(v) => setCode(v.replace(/[^0-9]/g, '').slice(0, 6))}
-            placeholder="123456"
+            onChangeText={(v) => setCode(v.replace(/[^0-9]/g, '').slice(0, 8))}
+            placeholder="12345678"
             keyboardType="number-pad"
-            maxLength={6}
+            maxLength={8}
             leftIcon="keypad-outline"
             autoFocus
           />

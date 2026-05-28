@@ -58,10 +58,10 @@ export default {
   reset_password_success_msg: 'Ya puedes iniciar sesión con tu nueva contraseña.',
 
   verify_code_title: 'Código de recuperación',
-  verify_code_subtitle: 'Hemos enviado un código de 6 dígitos a {{email}}. Introdúcelo abajo para continuar.',
+  verify_code_subtitle: 'Hemos enviado un código de 8 dígitos a {{email}}. Introdúcelo abajo para continuar.',
   verify_code_label: 'Código',
   verify_code_submit: 'Verificar código',
-  verify_code_invalid: 'El código debe tener 6 dígitos.',
+  verify_code_invalid: 'El código debe tener 8 dígitos.',
   verify_code_no_email: 'Falta el correo. Vuelve al login e inténtalo de nuevo.',
 
   dashboard_subtitle: 'Semana {{week}} · Panel principal',
