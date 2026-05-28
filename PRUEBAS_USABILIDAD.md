@@ -56,6 +56,8 @@ La triangulación de ambos métodos permite contrastar lo que el usuario realmen
 |---|---|
 | Fecha | 28 de mayo de 2026 |
 | Hora de inicio | 18:25 |
+| Hora de fin | 18:28 |
+| Duración total | 3 minutos |
 | Dispositivo | iPad propio de la participante |
 | Modo de ejecución | Expo Go (build de desarrollo) |
 | Versión de la app | 1.0.0 |
@@ -73,7 +75,7 @@ Se planteó un escenario contextualizado ("imagina que tienes un bar llamado *La
 | **T4** | Pedir una recomendación de IA para esa semana | 0:21 | ✅ | 0 |
 | **T5** | Exportar el historial en CSV | 0:55 | ✅ | 1 |
 
-**Tiempo total en tareas:** 2 minutos y 52 segundos.
+**Tiempo total de la sesión:** 3 minutos.
 
 ### 2.4 Observaciones por tarea
 
