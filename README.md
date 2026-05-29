@@ -78,7 +78,7 @@ El usuario introduce sus datos operativos una vez a la semana (ingresos, gastos,
 │  │Dashboard │  │  Datos   │  │   IA    │  │Historial│   │
 │  └────┬─────┘  └────┬─────┘  └────┬────┘  └────┬────┘   │
 │       └─────────────┴─────────────┴─────────────┘       │
-│                       apiClient (Axios + JWT)           │
+│                       apiClient (fetch + JWT)           │
 └───────────────────────────┬─────────────────────────────┘
                             │ HTTPS
                             ▼
@@ -114,9 +114,11 @@ El siguiente diagrama representa el flujo completo del usuario: el *auth guard* 
 ```mermaid
 graph TD
     Start([Arranque · app/_layout.tsx])
+    IndexRoute["index.tsx<br/>redirect según sesión"]
     AuthCheck{AuthContext<br/>¿Sesión válida?}
 
-    Start --> AuthCheck
+    Start --> IndexRoute
+    IndexRoute --> AuthCheck
     AuthCheck -->|No| Login
     AuthCheck -->|Sí| Dashboard
 
@@ -179,7 +181,9 @@ graph TD
 
 ```
 app/
-├── _layout.tsx              Layout raíz (Stack + deep links Supabase)
+├── _layout.tsx              Layout raíz (Stack + handler de deep links)
+├── index.tsx                Redirige a /(tabs) o /(auth)/login según sesión
+├── +not-found.tsx           Pantalla 404 nativa de expo-router
 │
 ├── (auth)/
 │   ├── _layout.tsx          Stack de autenticación
@@ -313,32 +317,34 @@ classDiagram
         <<APIRouter /periods>>
         +list_periods() PeriodRead[]
         +create_period(PeriodCreate) PeriodRead
-        +delete_period(id) 204
+        +get_period(period_id) PeriodRead
+        +delete_period(period_id) 204
     }
     class business_data_router {
         <<APIRouter /business-data>>
         +list_business_data() BusinessDataRead[]
         +create_business_data(BusinessDataCreate) BusinessDataRead
-        +update_business_data(id, BusinessDataUpdate) BusinessDataRead
-        +delete_business_data(id) 204
+        +get_business_data(entry_id) BusinessDataRead
+        +update_business_data(entry_id, BusinessDataUpdate) BusinessDataRead
+        +delete_business_data(entry_id) 204
     }
     class kpis_router {
         <<APIRouter /kpis>>
         +list_kpis() KpiRead[]
-        +get_kpi(period_id) KpiRead
-        +calculate_kpis(period_id) KpiRead
+        +get_kpis_for_period(period_id) KpiRead
+        +recalculate_kpis(period_id) KpiRead
     }
     class recommendations_router {
         <<APIRouter /recommendations>>
         +list_recommendations() RecommendationRead[]
         +get_recommendation(period_id) RecommendationRead
-        +generate(period_id, language) async RecommendationRead
-        +delete(period_id) 204
+        +generate_recommendation(period_id, language) async RecommendationRead
+        +delete_recommendation(period_id) 204
     }
     class users_router {
         <<APIRouter /users>>
-        +me() UserProfileRead
-        +update_me(UserProfileUpdate) UserProfileRead
+        +get_my_profile() UserProfileRead
+        +update_my_profile(UserProfileUpdate) UserProfileRead
     }
 
     %% ── INFRASTRUCTURE ────────────────────────────────────
@@ -536,7 +542,7 @@ Paleta completa duplicada para tema claro y oscuro, siguiendo el modelo de *colo
 | expo-router | 4 | Navegación basada en ficheros (tabs + stack) |
 | TypeScript | 5 | Tipado estático en todo el proyecto |
 | react-i18next | latest | Internacionalización (6 idiomas) |
-| Axios | latest | Cliente HTTP con interceptores JWT |
+| fetch + AbortController | nativo | Cliente HTTP con timeout configurable e inyección automática del JWT |
 | AsyncStorage | latest | Persistencia local de sesión y preferencias |
 
 ### Backend
@@ -568,6 +574,8 @@ BizKPI/
 │
 ├── app/                          # Pantallas (expo-router)
 │   ├── _layout.tsx               # Layout raíz + handler de deep links
+│   ├── index.tsx                 # Redirect según sesión
+│   ├── +not-found.tsx            # 404 nativa
 │   ├── (auth)/                   # Login (con modo registro)
 │   ├── reset-password.tsx        # Recuperación contraseña (OTP)
 │   └── (tabs)/                   # Navegación principal
@@ -585,7 +593,8 @@ BizKPI/
 │   │   ├── useRecommendations.ts # Gestión de recomendaciones IA
 │   │   └── useHistory.ts         # Historial con estado optimista
 │   ├── lib/
-│   │   └── apiClient.ts          # Axios + interceptor JWT automático
+│   │   ├── apiClient.ts          # Cliente HTTP (fetch) con JWT automático y timeout
+│   │   └── supabaseClient.ts     # Cliente Supabase con AsyncStorage como storage
 │   ├── mocks/                    # Datos semilla para desarrollo
 │   ├── services/                 # Capa de acceso a la API
 │   │   ├── authService.ts
@@ -739,8 +748,9 @@ Autenticación: `Authorization: Bearer <supabase_jwt>`
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/business-data/` | Lista todos los registros |
+| `GET` | `/business-data/{id}` | Obtiene un registro concreto |
 | `POST` | `/business-data/` | Crea un registro + calcula y guarda KPIs |
-| `PUT` | `/business-data/{id}` | Actualiza un registro + recalcula KPIs |
+| `PATCH` | `/business-data/{id}` | Actualiza un registro + recalcula KPIs |
 | `DELETE` | `/business-data/{id}` | Elimina un registro |
 
 ### KPIs
@@ -749,7 +759,7 @@ Autenticación: `Authorization: Bearer <supabase_jwt>`
 |--------|------|-------------|
 | `GET` | `/kpis/` | Lista todos los KPIs calculados |
 | `GET` | `/kpis/{period_id}` | KPIs de un período concreto |
-| `POST` | `/kpis/calculate/` | Recalcula KPIs a partir de un business_data |
+| `POST` | `/kpis/{period_id}/recalculate` | Recalcula KPIs a partir del business_data del período |
 
 ### Recomendaciones IA
 
@@ -757,7 +767,7 @@ Autenticación: `Authorization: Bearer <supabase_jwt>`
 |--------|------|-------------|
 | `GET` | `/recommendations/` | Lista todas las recomendaciones |
 | `GET` | `/recommendations/{period_id}` | Recomendación de un período |
-| `POST` | `/recommendations/generate/` | Genera (o regenera) una recomendación con IA |
+| `POST` | `/recommendations/{period_id}/generate` | Genera (o regenera) una recomendación con IA |
 | `DELETE` | `/recommendations/{period_id}` | Elimina una recomendación |
 
 ### Usuario y salud
@@ -765,7 +775,7 @@ Autenticación: `Authorization: Bearer <supabase_jwt>`
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | `GET` | `/users/me` | Perfil del usuario autenticado |
-| `PUT` | `/users/me` | Actualiza nombre del negocio |
+| `PATCH` | `/users/me` | Actualiza nombre del negocio (parcial) |
 | `GET` | `/health` | Estado del servicio (sin autenticación) |
 
 La documentación interactiva (Swagger UI) está disponible en `/docs` en entorno de desarrollo.
@@ -953,8 +963,8 @@ npx jest --watch
 
 | Suite | Fichero | Tests |
 |---|---|---|
-| Formateadores | `src/__tests__/formatters.test.ts` | 33 |
-| Helpers de período | `src/__tests__/periodHelpers.test.ts` | 40 |
+| Formateadores | `src/__tests__/formatters.test.ts` | 37 |
+| Helpers de período | `src/__tests__/periodHelpers.test.ts` | 36 |
 | **Total** | | **73** |
 
 ### Backend — pytest
@@ -971,11 +981,11 @@ pytest --cov=app --cov-report=term-missing
 
 | Suite | Fichero | Tests |
 |---|---|---|
-| Servicio de KPIs | `tests/test_kpi_service.py` | 16 |
+| Servicio de KPIs | `tests/test_kpi_service.py` | 21 |
 | Servicio de IA | `tests/test_ai_service.py` | 26 |
-| **Total** | | **42** |
+| **Total** | | **47** |
 
-**Total global: 115 tests.**
+**Total global: 120 tests.**
 
 ---
 
